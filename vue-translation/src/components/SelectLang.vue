@@ -1,16 +1,33 @@
 <script setup>
     import {ref, computed} from 'vue';
-    const selectedValue = "";
+    import ButtonGrad from './ButtonGrad.vue';
+
+
+    const selectedValue = ref('');
     const langSelected = ref(false);
+
+    const emit = defineEmits(['language-selected']);
+
 
     function selected(){
         langSelected.value = true;
+        console.log("language selected: " + selectedValue.value);
+        emit('language-selected', selectedValue.value)
     }
 
     const computedColor = computed(() => {
         return langSelected.value
             ? '#000000'
             : '#999999'
+    })
+
+    const btnText = `选择翻译语言`;
+
+    const props = defineProps({
+        nextLink: {
+            type: String,
+            required: false,
+        },
     })
 
     
@@ -26,9 +43,12 @@
             </select>
             <i class="iconfont icon-down"></i>
         </div>
-        <button class="button">
+        <!-- <button class="button">
             选择翻译语言
-        </button>
+        </button> -->
+        <a :href="nextLink">
+            <ButtonGrad :htmlContent="btnText" className="btnTrans"/>
+        </a>        
     </div>
 </template>
 
@@ -64,14 +84,13 @@
         pointer-events: none;
     }
  
-    .button{
+    /* .button{
         background-color: #3385ff;
         background-image: linear-gradient(90deg, #006eff, #13adff);
         box-shadow: 0 5px 10px 0 rgba(16, 110, 253, .3);
         border: none;
         font-size: 1rem;
         color: #fff;
-        /* padding: 0.8rem 0rem; */
         height: 2.6rem;
         width: 10rem;
         text-align: center;
@@ -83,7 +102,19 @@
         -webkit-transform: translateY(-0.198vw);
         -ms-transform: translateY(-0.198vw);
         transform: translateY(-0.198vw);
-    }
+    } */
+     .btnTrans {
+        font-size: 1rem;
+        height: 2.6rem;
+        width: 10rem;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+     }
+     a{
+        text-decoration: none;
+     }
     
 </style>
 
