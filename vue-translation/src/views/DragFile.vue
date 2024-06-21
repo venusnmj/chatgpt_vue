@@ -17,6 +17,7 @@ const props = defineProps({
 
 const files = ref([]);
 const directories = ref([]);
+const befFiles = ref([]);
 const loadVal = ref(0);
 const hasFiles = computed(() => files.value.length > 0);
 const fileArea = ref(null);
@@ -29,6 +30,7 @@ const computedWidth = computed(() => {
 
 const handleDragOver = (event) => {
   event.preventDefault();
+  fileArea.value.classList.add('drag-over');
   event.dataTransfer.dropEffect = 'copy';
   loadVal.value = 0;
 };
@@ -39,6 +41,7 @@ const handleDragLeave = () => {
 };
 
 const handleDrop = async (event) => {
+  fileArea.value.classList.remove('drag-over');
   event.preventDefault();
   const droppedFiles = event.dataTransfer.files;
   
@@ -63,8 +66,10 @@ const processFiles = async (fileList) => {
   }
 
   // Update the shared state with the processed files
-  fileAttr.files = directories.value;
-  console.log(fileAttr.files);
+  fileAttr.nodes = directories.value;
+  fileAttr.fileBef = befFiles.value;
+  console.log(fileAttr.nodes);
+  console.log(fileAttr.fileBef);
   loadVal.value = 100;
 };
 
@@ -89,31 +94,162 @@ const processFiles = async (fileList) => {
 //   }
 // };
 
+// const uncompressZip = async (file) => {
+//   const jszip = new JSZip();
+//   try {
+//     const zip = await jszip.loadAsync(file);
+//     const treeData = [];
+//     zip.forEach((relativePath, zipEntry) => {
+//       if(!(zipEntry.name).includes('__MACOSX') && !(zipEntry.name).includes('DS_Store') && !((zipEntry.name).slice(-1) == '/')){
+//         const pathParts = relativePath.split('/');
+//         let currentLevel = treeData;
+
+//         pathParts.forEach((part, index) => {
+//           let existingPath = currentLevel.find(item => item.label === part);
+//           if (!existingPath) {
+//             existingPath = { key: part, label: part, children: [] };
+//             currentLevel.push(existingPath);
+//           }
+
+//           if (index === pathParts.length - 1) {
+//             existingPath.label = part;
+//           }
+
+//           currentLevel = existingPath.children;
+//         });
+//       }
+//     });
+//     directories.value = treeData;
+//   } catch (error) {
+//     console.error('Error uncompressing zip file:', error);
+//   }
+//   loadVal.value = 100;
+// };
+
+// onMounted(()=>{
+//   fileArea.value.addEventListener('click', () => {
+//     fileInput.value.click();
+//     loadVal.value = 0;
+//   });
+// })
+
 const uncompressZip = async (file) => {
   const jszip = new JSZip();
+  befFiles.value = [];
   try {
     const zip = await jszip.loadAsync(file);
     const treeData = [];
+    const keyCounter = { value: 0 };
+
+    const getKey = () => {
+      return (keyCounter.value++).toString();
+    };
+
+    const fileCounter = { value: 0 };
+
+    const getFile = () => {
+      return (fileCounter.value++).toString();
+    };
+
+    const addEntry = (relativePath, content) => {
+      const pathParts = relativePath.split('/');
+      let currentLevel = treeData;
+      let keyPath = [];
+
+      let currentdate = new Date(); 
+      console.log(currentdate.toISOString());
+
+      // console.log("path: " + relativePath);
+      // console.log("one entry: " + content);
+
+
+      pathParts.forEach((part, index) => {
+        let existingPath = currentLevel.find(item => item.label === part);
+        if (!existingPath) {
+          let curKey = getKey();
+
+          const newEntry = {
+            key: curKey,
+            label: part,
+            icon: index === pathParts.length - 1 ? 'pi pi-fw pi-file' : 'pi pi-fw pi-folder',
+            data: `${part} ${index === pathParts.length - 1 ? 'File' : 'Folder'}`,
+            children: []
+          };
+          
+          currentLevel.push(newEntry);
+          existingPath = newEntry;
+
+
+          let lastSlash = relativePath.lastIndexOf('/');
+          const newFile = {
+            key: curKey,
+            type: relativePath.split('.')[1],
+            path: relativePath,
+            name: relativePath.substring(lastSlash + 1),
+            content: content
+          };
+          befFiles.value.push(newFile);
+
+          // if((index === pathParts.length - 1) && relativePath.includes('.')){
+          // let lastSlash = relativePath.lastIndexOf('/');
+          //   const newFile = {
+          //     key: curKey,
+          //     type: relativePath.split('.')[1],
+          //     path: relativePath,
+          //     name: relativePath.substring(lastSlash + 1),
+          //     content: content
+          //   };
+          //   befFiles.value.push(newFile);
+          // }
+
+        }
+        keyPath.push(existingPath.key);
+        currentLevel = existingPath.children;
+      });
+    };
+
+    const addContent = (relativePath, content) => {
+      // // console.log(relativePath.split('.')[1]);
+      // let lastSlash = relativePath.lastIndexOf('/');
+
+      // console.log(relativePath.substring(lastSlash + 1));
+      // const newFile = {
+      //   key: getFile(),
+      //   type: relativePath.split('.')[1],
+      //   path: relativePath,
+      //   name: relativePath.substring(lastSlash + 1),
+      //   content: content
+      // }
+
+      // befFiles.value.push(newFile);
+      let curFile= getFile();
+      if(relativePath.includes('.')){
+        let lastSlash = relativePath.lastIndexOf('/');
+          const newFile = {
+            key: curFile,
+            type: relativePath.split('.')[1],
+            path: relativePath,
+            name: relativePath.substring(lastSlash + 1),
+            content: content
+          };
+          befFiles.value.push(newFile);
+      }
+
+    };
+
     zip.forEach((relativePath, zipEntry) => {
       if(!(zipEntry.name).includes('__MACOSX') && !(zipEntry.name).includes('DS_Store') && !((zipEntry.name).slice(-1) == '/')){
-        const pathParts = relativePath.split('/');
-        let currentLevel = treeData;
-
-        pathParts.forEach((part, index) => {
-          let existingPath = currentLevel.find(item => item.label === part);
-          if (!existingPath) {
-            existingPath = { key: part, label: part, children: [] };
-            currentLevel.push(existingPath);
-          }
-
-          if (index === pathParts.length - 1) {
-            existingPath.label = part;
-          }
-
-          currentLevel = existingPath.children;
-        });
+        if (!zipEntry.dir) {
+          zipEntry.async('string').then((content) => {
+            addEntry(relativePath, content);
+            addContent(relativePath, content);
+            // directories.value.push({ name: zipEntry.name, content });
+          })
+      }
+        // addEntry(relativePath, zipEntry);
       }
     });
+
     directories.value = treeData;
   } catch (error) {
     console.error('Error uncompressing zip file:', error);
@@ -121,12 +257,13 @@ const uncompressZip = async (file) => {
   loadVal.value = 100;
 };
 
-onMounted(()=>{
+onMounted(() => {
   fileArea.value.addEventListener('click', () => {
     fileInput.value.click();
     loadVal.value = 0;
   });
-})
+});
+
 
 </script>
 

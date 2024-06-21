@@ -8,6 +8,7 @@ import Review from './views/Review.vue'
 import { ref, computed } from 'vue'
 // import Home from './Home.vue'
 // import Review from './Views/Review.vue'
+const showSteps = ref(true);
 
 const routes = {
   '/': DragFile,
@@ -18,7 +19,7 @@ const currentPath = ref(window.location.hash)
 
 window.addEventListener('hashchange', () => {
   currentPath.value = window.location.hash
-  console.log("at here now: "+currentPath.value)
+  // console.log("at here now: "+currentPath.value)
 })
 
 const currentView = computed(() => {
@@ -31,13 +32,23 @@ const currentView = computed(() => {
 //   const urlParams = new URLSearchParams(currentPath.value.split('?')[1]);
 //   return urlParams.get('lang');
 // });
+const firstPage = computed(()=>{
+  console.log("at here now: " + currentPath.value);
+  if (currentPath.value == '/' || currentPath.value == ''){
+    showSteps.value = true;
+  }
+  else {
+    showSteps.value = false;
+  }
+  return showSteps.value;
+})
 
 </script>
 
 <template>
   <link rel="stylesheet" href="https://at.alicdn.com/t/c/font_4585610_7vp1too427h.css">
   <Header />
-  <Steps />
+  <Steps v-if="firstPage"/>
   <div class="container">
         <div class="muted-sect">
             <!-- <component :is="currentView" :selectedLanguage="currentLanguage"/> -->

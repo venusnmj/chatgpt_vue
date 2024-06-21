@@ -3,6 +3,22 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 
-// import router from './router'
+import PrimeVue from 'primevue/config';
+import Tree from 'primevue/tree';
+import "primeicons/primeicons.css";
 
-createApp(App).mount('#app')
+import Aura from '@primevue/themes/aura';
+
+const app = createApp(App);
+app.use(PrimeVue, {
+    theme: {
+        preset: Aura
+    }
+});
+app.component('Tree', Tree);
+
+app.mount('#app');
+
+
+
+// createApp(App).mount('#app')
