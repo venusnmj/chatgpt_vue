@@ -1,6 +1,6 @@
 <script setup>
 // import { ref, reactive, defineProps, defineEmits } from 'vue'
-import { ref, onMounted, defineComponent } from 'vue';
+import { ref, onMounted, defineComponent, watch} from 'vue';
 // import { useToast } from "primevue/usetoast";
 import SelectLang from '../components/SelectLang.vue'
 import { fileAttr } from '../shared/fileAttr.js'
@@ -9,6 +9,7 @@ import PrimeVue from 'primevue/config';
 import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import Button from 'primevue/button';
+
 
 
 // import { EditorState } from '@codemirror/state'
@@ -58,7 +59,7 @@ const treeData = [
 // }
 
 // Assuming nodes and expandedKeys are coming from props or some other state management
-const nodes = ref(fileAttr.nodes);
+const fileCode = ref(fileAttr.fileBef);
 const expandedKeys = ref({});
 
 const expandAll = () => {
@@ -86,41 +87,102 @@ const expandNode = (node) => {
 const clickDir = ref(null);
 
 
-const findNodeLabel = (nodeList, key) => {
-    for (const node of nodeList) {
-        if (node.key === key) {
-            return node.label;
+const findNodeCode = (fileList, key) => {
+    for (const file of fileList) {
+        if (file.key === key) {
+            return file.code;
         }
-        if (node.children && node.children.length) {
-            const foundLabel = findNodeLabel(node.children, key);
-            if (foundLabel) {
-                return foundLabel;
+        if (file.children && file.children.length) {
+            const foundCode = findNodeCode(file.children, key);
+            if (foundCode) {
+                return foundCode;
             }
         }
     }
     return null;
 };
 
+
+const findNodeLabel = (fileList, key) => {
+    for (const file of fileList) {
+      return file.name;
+        // if (file.key === key) {
+        //     return file.label;
+        // }
+        // if (file.children && file.children.length) {
+        //     const foundLabel = findNodeLabel(file.children, key);
+        //     if (foundLabel) {
+        //         return foundLabel;
+        //     }
+        // }
+    }
+    return null;
+};
 const logSelectedLabels = () => {
+  console.log(fileCode.value);
     for (const [key, value] of Object.entries(selectedKey.value)) {
         if (value.checked === true && value.partialChecked === false) {
-            const label = findNodeLabel(nodes.value, key);
-            if (label.includes('.')) {
-                console.log(`Key: ${key}, Label: ${label},`);
-            }
+            const code = findNodeCode(fileCode.value, key);
+            const label = findNodeLabel(fileCode.value, key);
+            console.log(label);
+            console.log(code);
+            // if (label.includes('.')) {
+            //     console.log(`Key: ${key}, Code: ${code},`);
+            // }
         }
     }
 };
 
-onMounted(() => {
-    clickDir.value.addEventListener('click', () => {
-        try {
-            logSelectedLabels();
-        } catch (error) {
-            console.error(error);
-        }
-    });
-});
+const findNodeByKey = (nodeList, searchKey) => {
+  for (const [key, value] of Object.entries(nodeList)) {
+      if (key === searchKey) {
+        console.log("found: " + key + " " + value.name);
+
+          return [key, value];
+      }
+      // if (node.children && node.children.length) {
+      //     const foundNode = findNodeByKey(node.children, key);
+      //     if (foundNode) {
+      //         return foundNode;
+      //     }
+      // }
+  }
+  return null;
+};
+
+
+
+watch(selectedKey, (newVal) => {
+  if (newVal) {
+    // console.log(newVal)
+    // console.log(selectedKey)
+    
+
+      for (const [key, value] of Object.entries(newVal)) {
+        console.log(`Key: ${key}`);
+          if (value.checked === true && value.partialChecked === false) {
+              const label = findNodeLabel(fileCode.value, key);
+              if (label.includes('.')) {
+                  // Find and log the "code" value of the selected node
+                  const selectedNode = findNodeByKey(fileCode.value, key);
+                  if (selectedNode && selectedNode.data && selectedNode.data.code) {
+                      console.log(`Key: ${key}, Label: ${label}, Code: ${selectedNode.data.code}`);
+                  }
+              }
+          }
+      }
+    }
+})
+
+// onMounted(() => {
+//     clickDir.value.addEventListener('click', () => {
+//         try {
+//             logSelectedLabels();
+//         } catch (error) {
+//             console.error(error);
+//         }
+//     });
+// });
 
 // const logSelectedKeys = () => {
     
