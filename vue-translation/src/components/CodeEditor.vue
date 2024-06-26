@@ -55,7 +55,7 @@ import { sql } from '@codemirror/lang-sql';
 
 
 const props = defineProps({
-  initialDoc: {
+  codeDoc: {
     type: String,
     default: "function hello(){ let string = 'Hello World'}",
   },
@@ -65,6 +65,7 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['update:codeDoc']);
 const editor = ref(null);
 let view;
 
@@ -79,8 +80,8 @@ const languageExtensions = {
   sql
 };
 
-const setupEditor = () => {
-  const langExtension = languageExtensions[props.language];
+const setupEditor = (doc, lang) => {
+  const langExtension = languageExtensions[lang];
   const extensions = [
     langExtension ? langExtension() : javascript(),
     oneDark,
@@ -88,7 +89,7 @@ const setupEditor = () => {
   ];
 
   const state = EditorState.create({
-    doc: props.initialDoc,
+    doc,
     extensions
   });
 
@@ -97,158 +98,47 @@ const setupEditor = () => {
   } else {
     view = new EditorView({
       state,
-      parent: editor.value
+      parent: editor.value,
+      dispatch: (transaction) => {
+        view.update([transaction]);
+        if (transaction.docChanged) {
+          emit('update:codeDoc', view.state.doc.toString());
+        }
+      }
     });
   }
 };
 
 onMounted(() => {
-  setupEditor();
+  setupEditor(props.codeDoc, props.language);
 });
 
-watch(() => props.language, () => {
-  setupEditor();
-});
-</script>
-
-<template>
-    <div ref="editor"></div>
-</template>
-
-<style scoped>
-.cm-editor {
-height: 400px;
-border: 1px solid #ccc;
-}
-</style> 
-
-
-<!-- 
-<template>
-    <div ref="editor"></div>
-</template>
-<script setup>
-import { onMounted, ref, watch } from 'vue';
-import { EditorState } from '@codemirror/state';
-import { EditorView, basicSetup } from '@codemirror/basic-setup';
-import { languages } from '@codemirror/language-data';
-import { autocompletion } from '@codemirror/autocomplete';
-
-const props = defineProps({
-  initialDoc: {
-    type: String,
-    default: '',
-  },
-  language: {
-    type: String,
-    default: 'javascript',
-  },
+watch(() => props.codeDoc, (newCode) => {
+  if (view && newCode !== view.state.doc.toString()) {
+    setupEditor(newCode, props.language);
+  }
 });
 
-const editor = ref(null);
-let view;
-
-const setupEditor = () => {
-  const langSupport = languages.find(lang => lang.name.toLowerCase() === props.language.toLowerCase());
-  const extensions = [
-    basicSetup,
-    langSupport?.support || [],
-    autocompletion()
-  ];
-
-  const state = EditorState.create({
-    doc: props.initialDoc,
-    extensions
-  });
-
+watch(() => props.language, (newLang) => {
   if (view) {
-    view.setState(state);
-  } else {
-    view = new EditorView({
-      state,
-      parent: editor.value
-    });
+    setupEditor(view.state.doc.toString(), newLang);
   }
-};
-
-onMounted(() => {
-  setupEditor();
-});
-
-watch(() => props.language, () => {
-  setupEditor();
 });
 </script>
 
+<template>
+  <div ref="editor" class="cm-editor"></div>
+</template>
+
 <style scoped>
 .cm-editor {
-height: 400px;
-border: 1px solid #ccc;
+  height: 400px;
+  border: 1px solid #ccc;
 }
-</style> -->
-  
-<!-- <template>
-    <div ref="editor" class="cm-editor"></div>
-  </template>
-  
-  <script setup>
-  import { onMounted, ref, watch } from 'vue';
-  import { EditorState } from '@codemirror/state';
-  import { EditorView, basicSetup } from '@codemirror/basic-setup';
-  import { languages } from '@codemirror/language-data';
-  import { autocompletion } from '@codemirror/autocomplete';
-  
-  const props = defineProps({
-    initialDoc: {
-      type: String,
-      default: '',
-    },
-    language: {
-      type: String,
-      default: 'javascript',
-    },
-  });
-  
-  const editor = ref(null);
-  let view;
-  
-  const setupEditor = () => {
-    const langSupport = languages.find(lang => lang.name.toLowerCase() === props.language.toLowerCase());
-    const extensions = [
-      basicSetup,
-      langSupport?.support || [],
-      autocompletion()
-    ];
-  
-    const state = EditorState.create({
-      doc: props.initialDoc,
-      extensions
-    });
-  
-    if (view) {
-      view.setState(state);
-    } else {
-      view = new EditorView({
-        state,
-        parent: editor.value
-      });
-    }
-  };
-  
-  onMounted(() => {
-    setupEditor();
-  });
-  
-  watch(() => props.language, () => {
-    setupEditor();
-  });
-  </script>
-  
-  <style scoped>
-  .cm-editor {
-    height: 400px;
-    border: 1px solid #ccc;
-  }
-  </style> -->
-  
-  
+</style>
+
+
+
+
+
+

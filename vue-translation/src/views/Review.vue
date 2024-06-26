@@ -1,7 +1,5 @@
 <script setup>
-// import { ref, reactive, defineProps, defineEmits } from 'vue'
-import { ref, onMounted, defineComponent, watch} from 'vue';
-// import { useToast } from "primevue/usetoast";
+import { ref, onMounted, defineComponent, watch } from 'vue';
 import SelectLang from '../components/SelectLang.vue'
 import { fileAttr } from '../shared/fileAttr.js'
 import DirectoryItem from '../components/DirectoryItem.vue'
@@ -9,21 +7,11 @@ import PrimeVue from 'primevue/config';
 import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import Button from 'primevue/button';
-
-
-
-// import { EditorState } from '@codemirror/state'
-// import { Codemirror } from 'vue-codemirror'
-// import { javascript } from '@codemirror/lang-javascript'
-// import { oneDark } from '@codemirror/theme-one-dark'
-// import {EditorView, keymap} from "@codemirror/view"
-// import {defaultKeymap} from "@codemirror/commands"
-
 import CodeEditor from '../components/CodeEditor.vue'
-
 
 const selectedKey = ref(null);
 
+// format for file directory
 const treeData = [
   {
       key: '0',
@@ -52,15 +40,11 @@ const treeData = [
   },
 ];
 
-// if (!fileAttr.files[0].children[0].dir) {
-//   fileAttr.files[0].children[0].async('string').then((content) => {
-//       console.log(content)
-//   });
-// }
-
-// Assuming nodes and expandedKeys are coming from props or some other state management
 const fileCode = ref(fileAttr.fileBef);
 const expandedKeys = ref({});
+const nodes = ref(fileAttr.nodes);
+const codeStr = ref();
+const codeLang = ref();
 
 const expandAll = () => {
     for (let node of nodes.value) {
@@ -82,11 +66,9 @@ const expandNode = (node) => {
     }
 };
 
-// console.log("key"+selectedKey);
-// console.log(treeData);
 const clickDir = ref(null);
 
-
+// Get file content 
 const findNodeCode = (fileList, key) => {
     for (const file of fileList) {
         if (file.key === key) {
@@ -102,77 +84,115 @@ const findNodeCode = (fileList, key) => {
     return null;
 };
 
-
+// Get file name 
 const findNodeLabel = (fileList, key) => {
     for (const file of fileList) {
-      return file.name;
-        // if (file.key === key) {
-        //     return file.label;
-        // }
-        // if (file.children && file.children.length) {
-        //     const foundLabel = findNodeLabel(file.children, key);
-        //     if (foundLabel) {
-        //         return foundLabel;
-        //     }
-        // }
+        if (file.key === key) {
+            return file.name;
+        }
     }
     return null;
 };
+
 const logSelectedLabels = () => {
-  console.log(fileCode.value);
+    // console.log(fileCode.value);
     for (const [key, value] of Object.entries(selectedKey.value)) {
         if (value.checked === true && value.partialChecked === false) {
             const code = findNodeCode(fileCode.value, key);
             const label = findNodeLabel(fileCode.value, key);
-            console.log(label);
-            console.log(code);
-            // if (label.includes('.')) {
-            //     console.log(`Key: ${key}, Code: ${code},`);
-            // }
+            // console.log(label);
+            // console.log(code);
         }
     }
 };
 
+// Get file key 
 const findNodeByKey = (nodeList, searchKey) => {
-  for (const [key, value] of Object.entries(nodeList)) {
-      if (key === searchKey) {
-        console.log("found: " + key + " " + value.name);
-
-          return [key, value];
-      }
-      // if (node.children && node.children.length) {
-      //     const foundNode = findNodeByKey(node.children, key);
-      //     if (foundNode) {
-      //         return foundNode;
-      //     }
-      // }
-  }
-  return null;
+    for (const [key, value] of Object.entries(nodeList)) {
+        if (value.key === searchKey && value.name) {
+          // console.log("filename: "+value.name);
+            // console.log("found: " + value.key + " " + value.name);
+            return [value.key, value];
+        }
+    }
+    return null;
 };
 
 
-
-watch(selectedKey, (newVal) => {
-  if (newVal) {
-    // console.log(newVal)
-    // console.log(selectedKey)
+watch(selectedKey, (newVal, oldVal) => {
+  let codeChange;
+  if(oldVal){
+    console.log("old length: "+Object.keys(oldVal).length);
+    console.log("new length: "+Object.keys(newVal).length);
+    console.log(fileCode.value);
+    console.log(nodes);
+    let testVal;
+    let oppVal;
     
-
-      for (const [key, value] of Object.entries(newVal)) {
-        console.log(`Key: ${key}`);
-          if (value.checked === true && value.partialChecked === false) {
-              const label = findNodeLabel(fileCode.value, key);
-              if (label.includes('.')) {
-                  // Find and log the "code" value of the selected node
-                  const selectedNode = findNodeByKey(fileCode.value, key);
-                  if (selectedNode && selectedNode.data && selectedNode.data.code) {
-                      console.log(`Key: ${key}, Label: ${label}, Code: ${selectedNode.data.code}`);
-                  }
-              }
-          }
-      }
+    if(Object.keys(newVal).length > Object.keys(oldVal).length){
+      testVal = newVal;
+      oppVal = oldVal;
     }
-})
+    else if(Object.keys(oldVal).length > Object.keys(newVal).length){
+      testVal = oldVal;
+      oppVal = newVal;
+    }
+    
+    for (const [key, value] of Object.entries(testVal)) {
+        if (!oppVal || !oppVal[key] || oppVal[key].checked !== value.checked || oppVal[key].partialChecked !== value.partialChecked) {
+          if (value.checked === true && value.partialChecked === false) {
+            if(findNodeByKey(fileCode.value, key)){
+              const node = findNodeByKey(fileCode.value, key);
+              console.log("node is "+ node[1].name);
+              codeStr.value = `${node[1].code}`;
+              codeLang.value = node[1].type;
+              console.log("codeString: "+codeStr.value);
+              console.log("codeLang: "+ node[1].type);
+            }
+              
+    
+            
+            
+            
+            
+            
+            // if(node.name){
+            //   console.log(`Key: ${key}, Label: ${node.name}`);
+            // }
+            
+            // if (label && label.includes('.')) { 
+            //   const selectedNode = findNodeByKey(fileCode.value, key);
+            //   if (selectedNode && selectedNode.data && selectedNode.data.code) {
+            //     console.log(`Key: ${key}, Label: ${label}`);
+            //   }
+            // }
+          }
+        }
+      }
+  }
+
+  // if (newVal) {
+  //   for (const [key, value] of Object.entries(newVal)) {
+  //     if (!oldVal || !oldVal[key] || oldVal[key].checked !== value.checked || oldVal[key].partialChecked !== value.partialChecked) {
+  //       console.log(`Key changed: ${key}`);
+  //       if (value.checked === true && value.partialChecked === false) {
+  //         const label = findNodeLabel(fileCode.value, key);
+  //         if (label && label.includes('.')) { // Ensure label is not null or undefined
+  //           const selectedNode = findNodeByKey(fileCode.value, key);
+  //           if (selectedNode && selectedNode.data && selectedNode.data.code) {
+  //             console.log(`Key: ${key}, Label: ${label}, Code: ${selectedNode.data.code}`);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+}, { deep: true });
+
+const handleCodeUpdate = (newCode) => {
+    codeStr.value = newCode;
+};
+
 
 // onMounted(() => {
 //     clickDir.value.addEventListener('click', () => {
@@ -183,44 +203,6 @@ watch(selectedKey, (newVal) => {
 //         }
 //     });
 // });
-
-// const logSelectedKeys = () => {
-    
-//     for (const [key, value] of Object.entries(selectedKey.value)) {
-//         if (value.checked === true && value.partialChecked === false) {
-          
-//             console.log(key);
-//             console.log(fileAttr.nodes[key].label);
-//         }
-//     }
-    
-// };
-
-// onMounted(() => {
-//     clickDir.value.addEventListener('click', () => {
-//         try {
-//             logSelectedKeys();
-//         } catch (error) {
-//             console.error(error);
-//         }
-//     });
-// });
-
-// onMounted(() => {
-//   clickDir.value.addEventListener('click', () => {
-//     try{
-      
-//       console.log("keys: "+ Object.keys(selectedKey.value));
-//       console.log("values: "+ JSON.stringify(Object.values(selectedKey.value)));
-//       console.log(selectedKey.value)
-//     }
-//     catch(error){
-
-//     }
-
-//   });
-// });
-
 </script>
 
 <template>
@@ -236,100 +218,53 @@ watch(selectedKey, (newVal) => {
         </div>
       </div>
       <div class="codeSect">
-        <CodeEditor />
+        <CodeEditor :codeDoc="codeStr" @update:codeDoc="handleCodeUpdate"/>
       </div>
     </div>
-    <!-- <Tree :value="fileAttr.files" class="w-full md:w-[30rem]"></Tree> -->
     <SelectLang />
 </template>
 
-<!-- <script>
-  import { defineComponent, ref, shallowRef } from 'vue'
-  import { Codemirror } from 'vue-codemirror'
-  import { javascript } from '@codemirror/lang-javascript'
-  import { oneDark } from '@codemirror/theme-one-dark'
-
-  export default defineComponent({
-    components: {
-      Codemirror
-    },
-    setup() {
-      const code = ref(`console.log('Hello, world!')`)
-      const extensions = [javascript(), oneDark]
-
-      // Codemirror EditorView instance ref
-      const view = shallowRef()
-      const handleReady = (payload) => {
-        view.value = payload.view
-      }
-
-      // Status is available at all times via Codemirror EditorView
-      const getCodemirrorStates = () => {
-        const state = view.value.state
-        const ranges = state.selection.ranges
-        const selected = ranges.reduce((r, range) => r + range.to - range.from, 0)
-        const cursor = ranges[0].anchor
-        const length = state.doc.length
-        const lines = state.doc.lines
-        // more state info ...
-        // return ...
-      }
-
-      return {
-        code,
-        extensions,
-        handleReady,
-        log: console.log
-      }
-    }
-  })
-</script> -->
-
 <style>
-.file-tree .p-tree-node-selectable{
-  position: relative;
+.file-tree .p-tree-node-selectable {
+    position: relative;
 }
 .file-tree .p-checkbox {
     position: absolute;
     right: 0;
 }
-.file-tree.p-tree{
-  background-color: transparent;
-  padding: 0px;
+.file-tree.p-tree {
+    background-color: transparent;
+    padding: 0px;
 }
 .reviewCode {
-  display: flex;  
-  gap: 20px;
+    display: flex;  
+    gap: 20px;
 }
 .directorySect {
-  width: 30%;
-  display: flex;  
-  flex-direction: column;
-  gap: 20px;
+    width: 30%;
+    display: flex;  
+    flex-direction: column;
+    gap: 20px;
 }
-.fileDir{
-  /* height: 300px;
-  overflow-y: scroll;
-  padding-right: 20px; */
+.fileDir {
 }
-.codeSect{
-  width: 70%;
-  height: 300px;
-  overflow-y: scroll;
+.codeSect {
+    width: 70%;
+    height: 300px;
+    overflow-y: scroll;
 }
-.directBtn{
-  display: flex;
-  gap: 10px;
+.directBtn {
+    display: flex;
+    gap: 10px;
 }
-.directBtn .p-button{
-  background-color: transparent;
-  border: solid #3385ff 2px;
-  color: #3385ff;
+.directBtn .p-button {
+    background-color: transparent;
+    border: solid #3385ff 2px;
+    color: #3385ff;
 }
-.directBtn .p-button:not(:disabled):hover{
-  background-color: white;
-  border: solid #3385ff 2px;
-  color: #3385ff;
+.directBtn .p-button:not(:disabled):hover {
+    background-color: white;
+    border: solid #3385ff 2px;
+    color: #3385ff;
 }
 </style>
-
