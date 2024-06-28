@@ -1,15 +1,25 @@
 <script setup>
-import { ref, onMounted, defineComponent, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import SelectLang from '../components/SelectLang.vue'
 import { fileAttr } from '../shared/fileAttr.js'
-import DirectoryItem from '../components/DirectoryItem.vue'
 import PrimeVue from 'primevue/config';
 import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import Button from 'primevue/button';
 import CodeEditor from '../components/CodeEditor.vue'
+// import ConfirmDialog from 'primevue/confirmdialog';
+// import { useConfirm } from "primevue/useconfirm";
+// import Toast from 'primevue/toast';
+// import { useToast } from "primevue/usetoast";
+// import ConfirmationService from 'primevue/confirmationservice';
 
-const selectedKey = ref(null);
+
+// const confirm = useConfirm();
+// const toast = useToast();
+
+
+
+const selectedKey = ref({});
 
 // format for file directory
 const treeData = [
@@ -94,18 +104,6 @@ const findNodeLabel = (fileList, key) => {
     return null;
 };
 
-const logSelectedLabels = () => {
-    // console.log(fileCode.value);
-    for (const [key, value] of Object.entries(selectedKey.value)) {
-        if (value.checked === true && value.partialChecked === false) {
-            const code = findNodeCode(fileCode.value, key);
-            const label = findNodeLabel(fileCode.value, key);
-            // console.log(label);
-            // console.log(code);
-        }
-    }
-};
-
 // Get file key 
 const findNodeByKey = (nodeList, searchKey) => {
     for (const [key, value] of Object.entries(nodeList)) {
@@ -118,95 +116,79 @@ const findNodeByKey = (nodeList, searchKey) => {
     return null;
 };
 
+const collectKeys = (nodes, keys = {}) => {
+  nodes.forEach(node => {
+    keys[node.key] = { checked: true, partialChecked: false };
+    if (node.children) {
+      collectKeys(node.children, keys);
+    }
+  });
+  return keys;
+};
+
+onMounted(() => {
+  selectedKey.value = collectKeys(nodes.value);
+});
 
 watch(selectedKey, (newVal, oldVal) => {
   let codeChange;
   if(oldVal){
-    console.log("old length: "+Object.keys(oldVal).length);
-    console.log("new length: "+Object.keys(newVal).length);
-    console.log(fileCode.value);
-    console.log(nodes);
-    let testVal;
-    let oppVal;
+    console.log(oldVal);
+    // console.log("old length: "+Object.keys(oldVal).length);
+    // console.log("new length: "+Object.keys(newVal).length);
+    // console.log(fileCode.value);
+    // console.log(nodes);
+    let testVal = oldVal;
+    let oppVal = newVal;
     
     if(Object.keys(newVal).length > Object.keys(oldVal).length){
       testVal = newVal;
       oppVal = oldVal;
     }
-    else if(Object.keys(oldVal).length > Object.keys(newVal).length){
-      testVal = oldVal;
-      oppVal = newVal;
-    }
     
     for (const [key, value] of Object.entries(testVal)) {
         if (!oppVal || !oppVal[key] || oppVal[key].checked !== value.checked || oppVal[key].partialChecked !== value.partialChecked) {
           if (value.checked === true && value.partialChecked === false) {
-            if(findNodeByKey(fileCode.value, key)){
-              const node = findNodeByKey(fileCode.value, key);
+            const node = findNodeByKey(fileCode.value, key);
+            if(node !== null){
               console.log("node is "+ node[1].name);
               codeStr.value = `${node[1].code}`;
+
               codeLang.value = node[1].type;
-              console.log("codeString: "+codeStr.value);
-              console.log("codeLang: "+ node[1].type);
+              if(codeLang.value == "py"){
+                codeLang.value = "python";
+              }
+              else if(codeLang.value == "js"){
+                codeLang.value = "javascript"
+              }
+              // console.log("codeString: "+codeStr.value);
+              console.log("codeLang: "+ codeLang.value);
             }
-              
-    
-            
-            
-            
-            
-            
-            // if(node.name){
-            //   console.log(`Key: ${key}, Label: ${node.name}`);
-            // }
-            
-            // if (label && label.includes('.')) { 
-            //   const selectedNode = findNodeByKey(fileCode.value, key);
-            //   if (selectedNode && selectedNode.data && selectedNode.data.code) {
-            //     console.log(`Key: ${key}, Label: ${label}`);
-            //   }
-            // }
           }
         }
       }
-  }
-
-  // if (newVal) {
-  //   for (const [key, value] of Object.entries(newVal)) {
-  //     if (!oldVal || !oldVal[key] || oldVal[key].checked !== value.checked || oldVal[key].partialChecked !== value.partialChecked) {
-  //       console.log(`Key changed: ${key}`);
-  //       if (value.checked === true && value.partialChecked === false) {
-  //         const label = findNodeLabel(fileCode.value, key);
-  //         if (label && label.includes('.')) { // Ensure label is not null or undefined
-  //           const selectedNode = findNodeByKey(fileCode.value, key);
-  //           if (selectedNode && selectedNode.data && selectedNode.data.code) {
-  //             console.log(`Key: ${key}, Label: ${label}, Code: ${selectedNode.data.code}`);
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-}, { deep: true });
+      
+    }
+  }, { deep: true });
 
 const handleCodeUpdate = (newCode) => {
     codeStr.value = newCode;
 };
 
+const nextLinkRef = ref(null);
 
-// onMounted(() => {
-//     clickDir.value.addEventListener('click', () => {
-//         try {
-//             logSelectedLabels();
-//         } catch (error) {
-//             console.error(error);
-//         }
-//     });
-// });
+const submitLanguage = (lang) => {
+    console.log("submitted lang: " + lang);
+    fileAttr.selectedLanguage = lang;
+
+    if (nextLinkRef.value) {
+        nextLinkRef.value.click();
+    }
+};
+
 </script>
 
 <template>
-    <h1>Hello Review</h1>
     <div class="reviewCode">
       <div class="directorySect">
         <div class="directBtn">
@@ -218,10 +200,11 @@ const handleCodeUpdate = (newCode) => {
         </div>
       </div>
       <div class="codeSect">
-        <CodeEditor :codeDoc="codeStr" @update:codeDoc="handleCodeUpdate"/>
+        <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate"/>
       </div>
     </div>
-    <SelectLang />
+    <SelectLang nextLink="#/translating" @language-selected="submitLanguage"/>
+    <a ref="nextLinkRef" href="#/translating" style="display: none;"></a>
 </template>
 
 <style>
@@ -246,11 +229,12 @@ const handleCodeUpdate = (newCode) => {
     flex-direction: column;
     gap: 20px;
 }
-.fileDir {
-}
+/* .fileDir {
+} */
 .codeSect {
     width: 70%;
-    height: 300px;
+    /* height: 300px; */
+    height: 100%;
     overflow-y: scroll;
 }
 .directBtn {
@@ -266,5 +250,19 @@ const handleCodeUpdate = (newCode) => {
     background-color: white;
     border: solid #3385ff 2px;
     color: #3385ff;
+}
+.fileDir{
+  height: 350px;
+  overflow-y: scroll;
+  padding-right: 10px;
+}
+.fileDir::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 7px;
+}
+.fileDir::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, .5);
+  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
 }
 </style>
