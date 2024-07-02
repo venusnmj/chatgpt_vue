@@ -4,6 +4,9 @@ import { fileAttr } from '../shared/fileAttr.js';
 import PrimeVue from 'primevue/config';
 import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
+import CodeEditor from '../components/CodeEditor.vue'
+import ButtonGrad from '../components/ButtonGrad.vue'
+
 
 const selectedKey = ref(null);
 const dropdownVisiblePre = ref(false);
@@ -12,6 +15,13 @@ const expandedKeys = ref({});
 const fileCode = ref(fileAttr.fileBef);
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
+
+const agnText = ref(`重新再来`);
+const downloadText = ref('下载翻译文档');
+const codeStr = ref();
+const codeLang = ref();
+
+
 
 
 
@@ -25,19 +35,17 @@ const toggleDropdownPost = () => {
 
 const handleNodeSelectPre = (event) => {
     console.log("pre"+JSON.stringify(selectedKey));
-    console.log(event.node)
     dropdownVisiblePre.value = false;
 };
 
 const handleNodeSelectPost = (event) => {
     console.log("post"+JSON.stringify(selectedKey));
-    console.log(event.node)
     dropdownVisiblePost.value = false;
 };
 
 const selectedKeyLabel = computed(() => {
 
-  return selectedFile.value ? selectedFile.value : 'Select a file';
+  return selectedFile.value ? selectedFile.value : '选择文件';
 });
 
 const collectKeys = (nodes, keys = {}) => {
@@ -88,14 +96,65 @@ watch(selectedKey, (newVal, oldVal) => {
     if(node !== null){
         selectedFile.value = node[1].name;
         fileType.value = "pi pi-fw pi-file";
+        console.log(node[1].code);
+        
+        codeStr.value = `${node[1].code}`;
+
+        codeLang.value = node[1].type;
+        if(codeLang.value == "py"){
+            codeLang.value = "python";
+        }
+        else if(codeLang.value == "js"){
+            codeLang.value = "javascript"
+        }
+        console.log("codeLang: "+ codeLang.value);
     }
     else{
         selectedFile.value = findLabelByKey(fileAttr.nodes, key);
         console.log(selectedFile.value);
         fileType.value = 'pi pi-fw pi-folder';
     }
+
+
+
+    if(oldVal){
+    // console.log("old: "+ JSON.stringify(oldVal));
+    // console.log("old length: "+Object.keys(oldVal).length);
+    // console.log("new length: "+Object.keys(newVal).length);
+    // console.log(fileCode.value);
+    // console.log(nodes);
+    let testVal = oldVal;
+    let oppVal = newVal;
+    
+    for (const [key, value] of Object.entries(testVal)) {
+        if (!oppVal || !oppVal[key] || oppVal[key].checked !== value.checked || oppVal[key].partialChecked !== value.partialChecked) {
+          if (value.checked === true && value.partialChecked === false) {
+            const node = findNodeByKey(fileCode.value, key);
+            if(node !== null){
+              console.log("node is "+ node[1].name);
+              codeStr.value = `${node[1].code}`;
+
+              codeLang.value = node[1].type;
+              if(codeLang.value == "py"){
+                codeLang.value = "python";
+              }
+              else if(codeLang.value == "js"){
+                codeLang.value = "javascript"
+              }
+              // console.log("codeString: "+codeStr.value);
+              console.log("codeLang: "+ codeLang.value);
+            }
+          }
+        }
+      }
+      
+    }
     
 })
+
+const handleCodeUpdate = (newCode) => {
+    codeStr.value = newCode;
+};
 
 </script>
 
@@ -138,15 +197,27 @@ watch(selectedKey, (newVal, oldVal) => {
                 </div>
             </div>
         </div>
-    
     </div>
+    <div class="endBtn">
+        <div class="codeBef">
+            <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate"/>
+            <ButtonGrad  className="btnTrans btnRight" :htmlContent="downloadText"/>
+        </div>
+        <div class="codeAft">
+            <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate"/>
+            <a href="#/">
+                <ButtonGrad className="btnTrans" :htmlContent="agnText"/>
+            </a>
+        </div>
+    </div>
+    
 </template>
 
 <style scoped>
 .filesCtrl{
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 20px;
 }
 i.icon-right {
@@ -161,12 +232,17 @@ i.icon-right {
     align-items: center;
     justify-content: center;
     border-radius: 3rem;
+    align-self: flex-start;
 }
 .dropdown-container {
   position: relative;
 }
+
 div.pre-Ctrl, div.post-Ctrl{
-    width: 40%;
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .dropdown-toggle {
@@ -174,7 +250,7 @@ div.pre-Ctrl, div.post-Ctrl{
   align-items: center;
   cursor: pointer;
   padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
+  /* border: 1px solid #ccc; */
   border-radius: 0.25rem;
   background-color: #fff;
 }
@@ -199,4 +275,39 @@ div.pre-Ctrl, div.post-Ctrl{
     gap: 1rem;
     align-items: center;
 }
+.cm-editor.ͼo{
+  height: 100%;
+  border-radius: 0.5rem;
+}
+
+.btnTrans {
+  font-size: 1rem;
+  height: 2.6rem;
+  width: 10rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btnRight{
+    align-self: flex-end;
+}
+a {
+  text-decoration: none;
+}
+.endBtn{
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0rem;
+}
+
+div.codeBef, div.codeAft{
+    width: 49%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
 </style>

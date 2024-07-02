@@ -133,7 +133,6 @@ watch(() => props.language, (newLang) => {
 <style scoped>
 .cm-editor {
   height: 400px;
-  border: 1px solid #ccc;
 }
 </style>
 

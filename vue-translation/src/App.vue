@@ -5,6 +5,8 @@ import Steps from './components/Steps.vue';
 import DragFile from './views/DragFile.vue'
 import Review from './views/Review.vue'
 import Translating from './views/Translating.vue'
+import CodeCheck from './views/CodeCheck.vue'
+import NotFound from './views/NotFound.vue'
 
 import { ref, computed } from 'vue'
 // import Home from './Home.vue'
@@ -14,7 +16,8 @@ const showSteps = ref(true);
 const routes = {
   '/': DragFile,
   '/review': Review,
-  '/translating': Translating
+  '/translating': Translating,
+  '/codecheck': CodeCheck
 }
 
 const currentPath = ref(window.location.hash)

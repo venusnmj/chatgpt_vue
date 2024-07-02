@@ -126,8 +126,33 @@ const collectKeys = (nodes, keys = {}) => {
   return keys;
 };
 
+const changeKey = (nodes, keyVal) => {
+  nodes.forEach(node => {
+    if(node.key == keyVal){
+      console.log("change colour: " + JSON.stringify(node) );
+      console.log("change"+node.key);
+      console.log(node.label.split('.').pop() );
+      node.styleClass = "selectColor";
+    }
+    else{
+      node.styleClass = "";
+    }
+    if (node.children) {
+      changeKey(node.children, keyVal);
+    }
+  });
+  
+}
+const disableKey = (nodes, keys = {}) => {
+  nodes.forEach(node => {
+    console.log(JSON.stringify(node) )
+    console.log(node.label.split('.').pop() );
+  });
+};
+
 onMounted(() => {
   selectedKey.value = collectKeys(nodes.value);
+  console.log("for tree nodes: "+ JSON.stringify(nodes.value));
 });
 
 watch(selectedKey, (newVal, oldVal) => {
@@ -155,6 +180,8 @@ watch(selectedKey, (newVal, oldVal) => {
               codeStr.value = `${node[1].code}`;
 
               codeLang.value = node[1].type;
+              changeKey(nodes.value, key);
+            
               if(codeLang.value == "py"){
                 codeLang.value = "python";
               }
@@ -192,11 +219,17 @@ const submitLanguage = (lang) => {
     <div class="reviewCode">
       <div class="directorySect">
         <div class="directBtn">
-          <Button type="button" icon="pi pi-plus" label="Expand All" @click="expandAll">Expand</Button>
-          <Button type="button" icon="pi pi-minus" label="Collapse All" @click="collapseAll">Collapse</Button>
+          <Button type="button" icon="pi pi-plus" label="Expand All" @click="expandAll">展开</Button>
+          <Button type="button" icon="pi pi-minus" label="Collapse All" @click="collapseAll">收起</Button>
         </div>
         <div class="fileDir" ref="clickDir">
-          <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" class="w-full md:w-[30rem] file-tree"></Tree>
+          <!-- <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" class="w-full md:w-[30rem] file-tree" > 
+          </Tree> -->
+          <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" class="w-full md:w-[30rem] file-tree" > 
+            <template #default="slotProps">
+                <b>{{ slotProps.node.label }} HEHE</b>
+            </template>
+          </Tree>
         </div>
       </div>
       <div class="codeSect">
@@ -265,4 +298,12 @@ const submitLanguage = (lang) => {
   background-color: rgba(0, 0, 0, .5);
   -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
 }
+.cm-editor.ͼo{
+  height: 100%;
+  border-radius: 0.5rem;
+}
+.selectColor .p-tree-node-label{
+  color: #3385ff;
+}
+
 </style>

@@ -25,11 +25,11 @@ function checkLang() {
     if (selectedValue.value === '') {
         confirm.require({
             group: 'templating',
-            header: 'No language selected',
-            message: 'Please select a langauge.',
+            header: '未选择语言',
+            message: '请选择一种语言',
             // icon: 'pi pi-exclamation-circle',
             rejectProps: {
-                label: 'Dismiss',
+                label: '取消',
                 // icon: 'pi pi-times',
                 outlined: true,
                 size: 'small'

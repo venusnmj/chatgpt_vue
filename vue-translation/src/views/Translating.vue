@@ -6,6 +6,8 @@ import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import LoadingBar from '../components/LoadingBar.vue';
 import ProgressSpinner from 'primevue/progressspinner';
+import Button from 'primevue/button';
+import ButtonGrad from '../components/ButtonGrad.vue'
 
 
 const selectedKey = ref(null);
@@ -16,7 +18,14 @@ const fileCode = ref(fileAttr.fileBef);
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
 const loadVal = ref(0);
+const buttonText = ref(`继续`);
 
+const errorBool = ref(false);
+const completedBool = ref(true);
+
+const displayBool = computed(() => {
+    return errorBool && completedBool;
+})
 
 
 const toggleDropdownPre = () => {
@@ -41,7 +50,7 @@ const handleNodeSelectPost = (event) => {
 
 const selectedKeyLabel = computed(() => {
 
-  return selectedFile.value ? selectedFile.value : 'Select a file';
+  return selectedFile.value ? selectedFile.value : '选择文件';
 });
 
 const collectKeys = (nodes, keys = {}) => {
@@ -145,7 +154,34 @@ watch(selectedKey, (newVal, oldVal) => {
     
     </div>
     <div class="returnStatus">
-        <div class="loading">
+        <div v-if="errorBool" class="error">
+            <i class="pi pi-times-circle" />
+            <h1 class="loadingTitle">
+                10/12 文档已翻译
+            </h1>
+            <h3 class="notice done">
+                翻译已完成
+            </h3>
+            <div class="errorActions">
+                <Button label="用原版" severity="secondary" outlined />
+                <Button type="button" label="重试文档" severity="danger" badge="2"/>
+            </div>
+        </div>
+        <div v-else-if="completedBool" class="success">
+            <i class="pi pi-check-circle" />
+            <h1 class="loadingTitle">
+                12/12 文档已翻译
+            </h1>
+            <h3 class="notice done">
+                翻译已完成
+            </h3>
+            <div class="doneActions">
+                <a href="#/codecheck">
+                    <ButtonGrad className="btnTrans" :htmlContent="buttonText" />
+                </a>
+            </div>
+        </div>
+        <div v-else class="loading">
             <div class="loadingScreen">
                 <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
                 <h1 class="loadingTitle">
@@ -157,6 +193,8 @@ watch(selectedKey, (newVal, oldVal) => {
             </div>
             <LoadingBar :percentage="loadVal"/>
         </div>
+      
+        
     </div>
 </template>
 
@@ -170,6 +208,21 @@ watch(selectedKey, (newVal, oldVal) => {
 i.icon-right {
     font-size: 2rem;
     color: white;
+}
+.errorActions, .doneActions{
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding-top: 3rem;
+}
+.error i.pi-times-circle, .success i.pi-check-circle{
+    font-size: 7rem;
+}
+.error i.pi-times-circle{
+    color: #ef4444;
+}
+.success i.pi-check-circle{
+    color: #22c55e;
 }
 .arr-Ctrl{
     height: 3rem;
@@ -192,7 +245,7 @@ div.pre-Ctrl, div.post-Ctrl{
   align-items: center;
   cursor: pointer;
   padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
+  /* border: 1px solid #ccc; */
   border-radius: 0.25rem;
   background-color: #fff;
 }
@@ -217,7 +270,7 @@ div.pre-Ctrl, div.post-Ctrl{
     gap: 1rem;
     align-items: center;
 }
-.loadingScreen{
+.loadingScreen, .error, .success{
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -228,6 +281,21 @@ div.pre-Ctrl, div.post-Ctrl{
 h3.notice{
     color: #999999;
 }
+h3.notice.done{
+    color: #006eff;
+}
+.btnTrans {
+  font-size: 1rem;
+  height: 2.6rem;
+  width: 10rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+a {
+  text-decoration: none;
+}
 
 </style>
 <style>
@@ -235,5 +303,6 @@ h3.notice{
     stroke: #006eff;
     animation: p-progressspinner-dash 1.5s ease-in-out infinite;
 }
+
 
 </style>
