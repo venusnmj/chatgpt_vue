@@ -1,41 +1,4 @@
 <script setup>
-// import { onMounted, ref } from 'vue';
-// import { EditorState } from '@codemirror/state';
-// import { EditorView } from '@codemirror/view';
-// import { languages } from '@codemirror/language-data';
-// import { oneDark } from '@codemirror/theme-one-dark'; // Optional: Import a theme
-
-// const editor = ref(null);
-// let view;
-
-// const props = defineProps({
-//   initialDoc: {
-//     type: String,
-//     default: '',
-//   },
-//   language: {
-//     type: String,
-//     default: 'javascript',
-//   },
-// });
-
-// onMounted(() => {
-//   const state = EditorState.create({
-//     doc: '// Write your JavaScript code here\n',
-//     extensions: [
-//     //   basicSetup,
-//       javascript(),
-//       oneDark, // Apply the theme
-//       EditorView.lineWrapping // Optional: Enable line wrapping
-//     ]
-//   });
-
-//   new EditorView({
-//     state,
-//     parent: editor.value
-//   });
-// });
-
 import { onMounted, ref, watch } from 'vue';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
@@ -52,20 +15,22 @@ import { json } from '@codemirror/lang-json';
 import { xml } from '@codemirror/lang-xml';
 import { sql } from '@codemirror/lang-sql';
 
-
-
 const props = defineProps({
   codeDoc: {
     type: String,
-    default: "function hello(){ let string = 'Hello World'}",
+    default: "",
   },
   language: {
     type: String,
     default: 'javascript',
   },
+  isEditable: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-const emit = defineEmits(['update:codeDoc']);
+const emit = defineEmits(['update:codeDoc', 'key-event']);
 const editor = ref(null);
 let view;
 
@@ -80,12 +45,13 @@ const languageExtensions = {
   sql
 };
 
-const setupEditor = (doc, lang) => {
+const setupEditor = (doc, lang, editable) => {
   const langExtension = languageExtensions[lang];
   const extensions = [
     langExtension ? langExtension() : javascript(),
     oneDark,
-    autocompletion()
+    autocompletion(),
+    EditorView.editable.of(editable)  // Make the editor editable or read-only
   ];
 
   const state = EditorState.create({
@@ -107,21 +73,32 @@ const setupEditor = (doc, lang) => {
       }
     });
   }
+
+  // Add keydown event listener to emit key events to the parent
+  view.dom.addEventListener('keydown', (event) => {
+    emit('key-event', event);
+  });
 };
 
 onMounted(() => {
-  setupEditor(props.codeDoc, props.language);
+  setupEditor(props.codeDoc, props.language, props.isEditable);
 });
 
 watch(() => props.codeDoc, (newCode) => {
   if (view && newCode !== view.state.doc.toString()) {
-    setupEditor(newCode, props.language);
+    setupEditor(newCode, props.language, props.isEditable);
   }
 });
 
 watch(() => props.language, (newLang) => {
   if (view) {
-    setupEditor(view.state.doc.toString(), newLang);
+    setupEditor(view.state.doc.toString(), newLang, props.isEditable);
+  }
+});
+
+watch(() => props.isEditable, (newEditable) => {
+  if (view) {
+    setupEditor(view.state.doc.toString(), props.language, newEditable);
   }
 });
 </script>
@@ -135,9 +112,3 @@ watch(() => props.language, (newLang) => {
   height: 400px;
 }
 </style>
-
-
-
-
-
-

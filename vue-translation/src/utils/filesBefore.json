@@ -1,0 +1,58 @@
+[
+  {
+    "key": "1",
+    "type": "py",
+    "path": "simpleTest/test_python.py",
+    "name": "test_python.py",
+    "content": {},
+    "code": "print('Hello World')\nprint('Test')\n\nif True:\n    print('Hello World')\n    print('Test')\n\n\ndef foo():\n    print('Hello World')\n    print('Test')\n\n    if True:\n        print('Hello World')\n        print('Test')\n\nif True:\n    print('Hello World')\n    print('Test')\n\n\nprint('Hello World')\n\nprint('Test')"
+  },
+  {
+    "key": "2",
+    "type": "html",
+    "path": "simpleTest/test_html.html",
+    "name": "test_html.html",
+    "content": {},
+    "code": "<!DOCTYPE html>\n<html lang=\"zh\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>每日新闻报</title>\n    <style>\n        body {\n            font-family: 'SimSun', '宋体', serif; /* CSS font-family for Chinese serif */\n            margin: 0;\n            padding: 0;\n            background: white;\n            color: black;\n        }\n        header {\n            background: black;\n            color: white;\n            padding: 10px 20px;\n            text-align: center;\n            font-size: 2em;\n        }\n        article {\n            margin: 20px;\n            padding: 20px;\n            border: 1px solid #ccc;\n            border-radius: 5px;\n        }\n        .column {\n            float: left;\n            width: 33%;\n        }\n        .clearfix::after {\n            content: \"\";\n            clear: both;\n            display: table;\n        }\n        img {\n            max-width: 100%;\n            height: auto;\n        }\n        footer {\n            text-align: center;\n            padding: 10px;\n            margin-top: 20px;\n            background: #333;\n            color: white;\n        }\n    </style>\n</head>\n<body>\n    <header>\n        每日新闻报\n    </header>\n    <div class=\"clearfix\">\n        <div class=\"column\">\n            <article>\n                <h2>国内新闻</h2>\n                <img src=\"https://via.placeholder.com/300x200.png?text=新闻图片\" alt=\"新闻图片\">\n                <p>中国北京 — 今天的重大新闻事件发生在北京，政府宣布了...</p>\n            </article>\n        </div>\n        <div class=\"column\">\n            <article>\n                <h2>国际新闻</h2>\n                <img src=\"https://via.placeholder.com/300x200.png?text=新闻图片\" alt=\"新闻图片\">\n                <p>美国华盛顿 — 美国总统在今日的演讲中提到...</p>\n            </article>\n        </div>\n        <div class=\"column\">\n            <article>\n                <h2>经济</h2>\n                <img src=\"https://via.placeholder.com/300x200.png?text=新闻图片\" alt=\"新闻图片\">\n                <p>全球经济面临多重挑战，包括...</p>\n            </article>\n        </div>\n    </div>\n    <footer>\n        版权所有 © 每日新闻报 2024\n    </footer>\n</body>\n</html>\n"
+  },
+  {
+    "key": "3",
+    "type": "java",
+    "path": "simpleTest/test1.java",
+    "name": "test1.java",
+    "content": {},
+    "code": "import java.util.Scanner;\n\n    public class test1 {\n\n        private static void bubble(int[] arr, int length){\n            int i, j, t; \n\n            for (i = length -2; i >=0; i--){\n                for (j=0; j<=i; j++){\n                    if (arr[j] > arr[j+1]){\n                        t = arr[j]; \n                        arr[j] = arr[j+1]; \n                        arr[j+1] = t; \n                    }\n                }\n            }\n        }\n\n        public static void main(String[] arrs) {\n            int[] arr = new int[100]; \n            int n, i;\n\n            System.out.printf(\"\\n\\n 输入要排序的整数元素数量：\");\n            \n            Scanner scanner = new Scanner(System.in);\n            n = scanner.nextInt(); \n            scanner.close(); \n\n            for (i = 0; i < n; i++){\n                System.out.printf(\"\\n\\n 为第 %d 个元素输入整数值：\", i+1);\n                arr[i] = scanner.nextInt(); \n            }\n\n            bubble(arr,n); \n\n            System.out.printf(\"\\n\\n 最终排序后的数组为：\"); \n            for (i = 0; i<= n-1; i++){\n                System.out.printf(\"%d \", arr[i]);\n            }\n        }\n    }"
+  },
+  {
+    "key": "4",
+    "type": "py",
+    "path": "simpleTest/long_code.py",
+    "name": "long_code.py",
+    "content": {},
+    "code": "def long_function():\n    # This is a long function to test the CodeTranslator\n    for i in range(10):\n        print(\"This is line number\", i)\n        if i % 2 == 0:\n            print(\"Even number:\", i)\n        else:\n            print(\"Odd number:\", i)\n    \n    # Adding more lines to ensure it's long enough\n    for j in range(20):\n        print(\"Another loop, line number\", j)\n        if j % 3 == 0:\n            print(\"Multiple of 3:\", j)\n        elif j % 5 == 0:\n            print(\"Multiple of 5:\", j)\n        else:\n            print(\"Not a multiple of 3 or 5:\", j)\n    \n    # Another set of lines\n    for k in range(30):\n        print(\"Yet another loop, line number\", k)\n        if k % 4 == 0:\n            print(\"Multiple of 4:\", k)\n        elif k % 6 == 0:\n            print(\"Multiple of 6:\", k)\n        else:\n            print(\"Not a multiple of 4 or 6:\", k)\n\n    # Final set of lines\n    for l in range(40):\n        print(\"Final loop, line number\", l)\n        if l % 7 == 0:\n            print(\"Multiple of 7:\", l)\n        elif l % 8 == 0:\n            print(\"Multiple of 8:\", l)\n        else:\n            print(\"Not a multiple of 7 or 8:\", l)\n\nif __name__ == \"__main__\":\n    long_function()\n"
+  },
+  {
+    "key": "5",
+    "type": "py",
+    "path": "simpleTest/test1_python.py",
+    "name": "test1_python.py",
+    "content": {},
+    "code": "def bubble(arr):\n    length = len(arr)\n    for i in range(length - 1):\n        for j in range(0, length - i - 1):\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n\ndef main():\n    arr = []\n    n = int(input(\"\\n\\n 输入要排序的整数元素数量：\"))\n    for i in range(n):\n        num = int(input(\"\\n\\n 为第 {} 个元素输入整数值：\".format(i + 1)))\n        arr.append(num)\n    bubble(arr)\n    print(\"\\n\\n 最终排序后的数组为：\", end=\" \")\n    for num in arr:\n        print(num, end=\" \")\n\n\nmain()\n"
+  },
+  {
+    "key": "7",
+    "type": "java",
+    "path": "simpleTest/nestedFolder/nestedTest.java",
+    "name": "nestedTest.java",
+    "content": {},
+    "code": "import java.util.Scanner;\n\n    public class test1 {\n\n        private static void bubble(int[] arr, int length){\n            int i, j, t; \n\n            for (i = length -2; i >=0; i--){\n                for (j=0; j<=i; j++){\n                    if (arr[j] > arr[j+1]){\n                        t = arr[j]; \n                        arr[j] = arr[j+1]; \n                        arr[j+1] = t; \n                    }\n                }\n            }\n        }\n\n        public static void main(String[] arrs) {\n            int[] arr = new int[100]; \n            int n, i;\n\n            System.out.printf(\"\\n\\n 输入要排序的整数元素数量：\");\n            \n            Scanner scanner = new Scanner(System.in);\n            n = scanner.nextInt(); \n            scanner.close(); \n\n            for (i = 0; i < n; i++){\n                System.out.printf(\"\\n\\n 为第 %d 个元素输入整数值：\", i+1);\n                arr[i] = scanner.nextInt(); \n            }\n\n            bubble(arr,n); \n\n            System.out.printf(\"\\n\\n 最终排序后的数组为：\"); \n            for (i = 0; i<= n-1; i++){\n                System.out.printf(\"%d \", arr[i]);\n            }\n        }\n    }"
+  },
+  {
+    "key": "8",
+    "type": "sql",
+    "path": "simpleTest/nestedFolder/sql.sql",
+    "name": "sql.sql",
+    "content": {},
+    "code": "-- 1. Create tables\nCREATE TABLE employees (\n    employee_id INT PRIMARY KEY,\n    first_name VARCHAR(50),\n    last_name VARCHAR(50),\n    department_id INT,\n    salary DECIMAL(10, 2),\n    hire_date DATE\n);\n\nCREATE TABLE departments (\n    department_id INT PRIMARY KEY,\n    department_name VARCHAR(50),\n    manager_id INT\n);\n\nCREATE TABLE projects (\n    project_id INT PRIMARY KEY,\n    project_name VARCHAR(100),\n    start_date DATE,\n    end_date DATE\n);\n\nCREATE TABLE employee_projects (\n    employee_id INT,\n    project_id INT,\n    hours_worked INT,\n    PRIMARY KEY (employee_id, project_id)\n);\n\n-- 2. Insert data into tables\nINSERT INTO employees (employee_id, first_name, last_name, department_id, salary, hire_date) VALUES\n(1, 'John', 'Doe', 1, 60000, '2015-01-15'),\n(2, 'Jane', 'Smith', 2, 75000, '2017-03-23'),\n(3, 'Alice', 'Johnson', 1, 50000, '2019-07-19'),\n(4, 'Bob', 'Brown', 3, 82000, '2013-11-04'),\n(5, 'Charlie', 'Davis', 2, 67000, '2020-05-14');\n\nINSERT INTO departments (department_id, department_name, manager_id) VALUES\n(1, 'Engineering', 1),\n(2, 'Marketing', 2),\n(3, 'Sales', 4);\n\nINSERT INTO projects (project_id, project_name, start_date, end_date) VALUES\n(1, 'Project A', '2021-01-01', '2021-12-31'),\n(2, 'Project B', '2021-06-01', '2022-06-01'),\n(3, 'Project C', '2022-01-01', '2022-12-31');\n\nINSERT INTO employee_projects (employee_id, project_id, hours_worked) VALUES\n(1, 1, 120),\n(1, 2, 100),\n(2, 1, 150),\n(3, 3, 200),\n(4, 1, 90),\n(4, 2, 110),\n(5, 3, 180);\n\n-- 3. Nested query using CTE (Common Table Expressions)\nWITH department_salaries AS (\n    SELECT department_id, SUM(salary) AS total_salary\n    FROM employees\n    GROUP BY department_id\n),\nhighest_salary_department AS (\n    SELECT department_id\n    FROM department_salaries\n    ORDER BY total_salary DESC\n    LIMIT 1\n)\nSELECT e.employee_id, e.first_name, e.last_name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.department_id = (SELECT department_id FROM highest_salary_department);\n\n-- 4. Aggregations and window functions\nSELECT e.department_id, e.employee_id, e.first_name, e.salary,\n       AVG(e.salary) OVER (PARTITION BY e.department_id) AS avg_department_salary,\n       RANK() OVER (PARTITION BY e.department_id ORDER BY e.salary DESC) AS salary_rank\nFROM employees e\nORDER BY e.department_id, salary_rank;\n\n-- 5. Subquery inside a JOIN operation\nSELECT e.employee_id, e.first_name, e.last_name, p.project_name, ep.hours_worked\nFROM employees e\nJOIN employee_projects ep ON e.employee_id = ep.employee_id\nJOIN projects p ON ep.project_id = p.project_id\nWHERE ep.project_id = (SELECT project_id FROM projects WHERE project_name = 'Project B');\n\n-- 6. Multiple JOINs and filters\nSELECT e.employee_id, e.first_name, e.last_name, d.department_name, p.project_name, ep.hours_worked\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nJOIN employee_projects ep ON e.employee_id = ep.employee_id\nJOIN projects p ON ep.project_id = p.project_id\nWHERE d.department_name = 'Engineering' AND ep.hours_worked > 100\nORDER BY e.last_name, p.project_name;\n"
+  }
+]

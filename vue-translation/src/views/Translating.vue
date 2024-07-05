@@ -64,6 +64,7 @@ const collectKeys = (nodes, keys = {}) => {
 };
 
 onMounted(() => {
+    console.log(fileAttr.fileBef);
   expandedKeys.value = collectKeys(fileAttr.nodes);
   selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
 });

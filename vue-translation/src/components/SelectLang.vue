@@ -38,12 +38,6 @@ function checkLang() {
                 label: 'OK',
                 // icon: 'pi pi-check',
                 size: 'small'
-            },
-            accept: () => {
-                toast.add({ severity: 'info', summary: 'Confirmed', detail: 'You have accepted', life: 3000 });
-            },
-            reject: () => {
-                toast.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
             }
         });
     } else {

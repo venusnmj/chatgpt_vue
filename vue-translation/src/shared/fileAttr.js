@@ -5,4 +5,5 @@ export const fileAttr = reactive({
   nodes: [],
   fileBef: [],
   fileAtr: [],
+  userId: null,
 });

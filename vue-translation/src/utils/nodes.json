@@ -1,0 +1,70 @@
+[
+  {
+    "key": "0",
+    "label": "simpleTest",
+    "icon": "pi pi-fw pi-folder",
+    "data": "simpleTest Folder",
+    "children": [
+      {
+        "key": "1",
+        "label": "test_python.py",
+        "icon": "pi pi-fw pi-file",
+        "data": "test_python.py File",
+        "type": "py",
+        "path": "simpleTest/test_python.py",
+        "content": {},
+        "children": []
+      },
+      {
+        "key": "2",
+        "label": "test_html.html",
+        "icon": "pi pi-fw pi-file",
+        "data": "test_html.html File",
+        "children": []
+      },
+      {
+        "key": "3",
+        "label": "test1.java",
+        "icon": "pi pi-fw pi-file",
+        "data": "test1.java File",
+        "children": []
+      },
+      {
+        "key": "4",
+        "label": "long_code.py",
+        "icon": "pi pi-fw pi-file",
+        "data": "long_code.py File",
+        "children": []
+      },
+      {
+        "key": "5",
+        "label": "test1_python.py",
+        "icon": "pi pi-fw pi-file",
+        "data": "test1_python.py File",
+        "children": []
+      },
+      {
+        "key": "6",
+        "label": "nestedFolder",
+        "icon": "pi pi-fw pi-folder",
+        "data": "nestedFolder Folder",
+        "children": [
+          {
+            "key": "7",
+            "label": "nestedTest.java",
+            "icon": "pi pi-fw pi-file",
+            "data": "nestedTest.java File",
+            "children": []
+          },
+          {
+            "key": "8",
+            "label": "sql.sql",
+            "icon": "pi pi-fw pi-file",
+            "data": "sql.sql File",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+]

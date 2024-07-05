@@ -1,19 +1,22 @@
 <script setup>
 const props = defineProps({
   userCount: Number,
-  fileCount: Number
+  fileCount: Number,
+  appTitle: String,
+  logoSrc: String,
+
 })
 </script>
 
 <template>
     <header>
         <div class="title">
-            <img src="../assets/7clawlogo.png" alt="">
-            <h1>AI代码翻译</h1>
+            <img :src="logoSrc" alt="">
+            <h1>{{appTitle}}</h1>
         </div>
         <div class="stats">
-            <h3><span>{{ userCount = "1,200" }} 用户</span>已使用</h3>
-            <h3><span>{{ fileCount = "1,500" }} 文档</span>已翻译</h3>
+            <h3><span>{{ userCount}} 用户</span>已使用</h3>
+            <h3><span>{{ fileCount}} 文档</span>已翻译</h3>
         </div>
     </header>
 </template>
