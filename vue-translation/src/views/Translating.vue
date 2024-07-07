@@ -145,6 +145,8 @@ const PollingFiles = async (fileArr, total, userId, userJwt) => {
             if(state == 'completed'){
                 done++;
                 value.completed = true;
+                loadVal.value = Math.floor((done/total)*100);
+                doneProcess.value = done;
                 console.log("old completed status true:" + value.key + Object.values(fileAttr.fileBef));
                 // value.code = await GetTranslated(userId, value.fileId, userJwt)
             }

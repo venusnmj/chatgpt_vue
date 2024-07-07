@@ -438,14 +438,20 @@ const gettingSetup = async () => {
 const gettingHistory = async (userId, jwt) => {
   try {
     const data = await GetHistory(userId, jwt);
-    fileHistory.value = data;
+    
     if(data == "no past translated files"){
       hasHistory.value = false;
       console.log(data);
     }
+    else{
+      hasHistory.value = true;
+      const cleanHis = JSON.parse(data);
+      const lastTen = cleanHis.slice(-10, cleanHis.length);
+      fileHistory.value = lastTen;
+    }
     // console.log(excludeFiles.value);
     // console.log(excludeFolders.value);
-    return data;
+    return data.slice(0, 10);
   } catch (error) {
     apiError.value = error.message;
     throw error;
@@ -561,15 +567,16 @@ onMounted(async () => {
           </p>
         </Dialog>
       </div>
-      <div v-if="hasHistory" class="pastHistory">
-        <h3>
-          已翻译的文件
-        </h3>
-        <div class="pastFiles">
-          <Button v-for="history in fileHistory" :label="history.filePath.substring(history.filePath.lastIndexOf('/') + 1)" icon="pi pi-fw pi-download" severity="secondary" text raised/>
-        </div>
-
-      </div>
+      
+    </div>
+  </div>
+  <div v-if="hasHistory" class="pastHistory">
+    <h3>
+      已翻译的文件
+    </h3>
+    <div class="pastFiles">
+      <Button v-for="history in fileHistory" :label="history.filePath.substring(history.filePath.lastIndexOf('/') + 1)" icon="pi pi-fw pi-download" severity="secondary" text raised/>
+      <!-- history.filePath.substring(history.filePath.lastIndexOf('/') + 1) -->
     </div>
   </div>
   
