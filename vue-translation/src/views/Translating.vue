@@ -8,24 +8,51 @@ import LoadingBar from '../components/LoadingBar.vue';
 import ProgressSpinner from 'primevue/progressspinner';
 import Button from 'primevue/button';
 import ButtonGrad from '../components/ButtonGrad.vue'
+import { SendFile, PollingFile, RetryFile } from '../utils/apiCalls';
 
+
+const apiError = ref(null);
 
 const selectedKey = ref(null);
 const dropdownVisiblePre = ref(false);
 const dropdownVisiblePost = ref(false);
 const expandedKeys = ref({});
 const fileCode = ref(fileAttr.fileBef);
+const transArr = ref(fileAttr.fileAft);
+const userID = ref(fileAttr.userId);
+const selectLang = ref(fileAttr.selectedLanguage);
+// var oldnodes = fileAttr.nodes;
+const nodes = ref(fileAttr.nodes);
+const storeJwt = ref(fileAttr.userJwt);
+
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
 const loadVal = ref(0);
 const buttonText = ref(`继续`);
 
+const pgLoading = ref(true);
 const errorBool = ref(false);
-const completedBool = ref(true);
+const completedBool = ref(false);
 
-const displayBool = computed(() => {
-    return errorBool && completedBool;
+const allProcess = ref(0);
+const doneProcess = ref(0);
+
+const nextLinkRef = ref(null);
+
+const sentArr = ref([]);
+
+
+
+// const isTranslating = ref(false);
+// const needRetry = ref(false);
+// const isDone = ref(false);
+
+
+const loadString = computed(() => {
+    return `${doneProcess.value}/${allProcess.value} 已翻译`
 })
+
+
 
 
 const toggleDropdownPre = () => {
@@ -63,10 +90,80 @@ const collectKeys = (nodes, keys = {}) => {
   return keys;
 };
 
+const addCompleted = (fileArr, nodes) => {
+    for (const [key, value] of Object.entries(fileArr)) {
+        if(value.completed){
+            console.log("done is "+value.key);
+            doneClass(nodes, value.key);
+        }
+    }
+    return nodes;
+};
+
+const doneClass = (nodes, keyVal) => {
+    nodes.forEach(node => {
+        if(node.key == keyVal){
+            node.styleClass = "completedColor";
+            node.icon = "pi pi-fw pi-check-circle"
+        }
+        if (node.children) {
+            doneClass(node.children, keyVal);
+        }
+    })
+    console.log(nodes);
+}
+
+const PollingFiles = async (fileArr, tarLang, total) => {
+    let done = 0;
+    // let allProcess = 0;
+    for (const [key, value] of Object.entries(fileArr)) {
+        if(value.translate){
+            let state = await HandlePolling(value.fileId, value.content, tarLang, value.path);
+            if(state == 'completed'){
+                done++;
+                value.completed = true;
+            }
+        }
+    }
+    if(done == total){
+        completedBool.value = true;
+    }
+    console.log(done + "/" + total);
+    console.log(Math.floor((done/total)*100));
+    loadVal.value = Math.floor((done/total)*100);
+    return done;
+
+    
+}
+
+const HandlePolling = async (fileId, file, tarLang, path) => {
+    try {
+        const data = await PollingFile(fileId);
+        console.log(data.status)
+        return data.status;
+    } catch (error) {
+        apiError.value = error.message;
+        throw error;
+    }
+}
+
+onMounted(async () => {
+    allProcess.value = await SubmitSelected(transArr.value, selectLang.value, userID.value, storeJwt.value);
+    console.log("all submitted processes "+allProcess.value)
+    pgLoading.value = false;
+
+    doneProcess.value = await PollingFiles(transArr.value, selectLang.value, allProcess.value);
+    console.log(transArr.value);
+    addCompleted(transArr.value, nodes.value);
+})
+
 onMounted(() => {
-    console.log(fileAttr.fileBef);
-  expandedKeys.value = collectKeys(fileAttr.nodes);
-  selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
+    sentArr.value = [];
+    // console.log(fileAttr.fileBef);
+    expandedKeys.value = collectKeys(nodes.value);
+    selectedFile.value = findLabelByKey(nodes.value, 0);
+    // expandedKeys.value = collectKeys(fileAttr.nodes);
+    // selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
 });
 
 const findNodeByKey = (nodeList, searchKey) => {
@@ -94,6 +191,42 @@ const findLabelByKey = (nodes, searchKey) => {
   return null;
 };
 
+const prepNext = () => {
+    nextLinkRef.value.click();
+}
+
+const SubmitSelected = async (fileArr, tarLang, userId, userJwt) => {
+    let sentArr = [];
+    for (const [key, value] of Object.entries(fileArr)) {
+        if(value.translate){
+            console.log(userId + " " + value.fileId + " " + tarLang + " " + value.path);
+            console.log("file content is " + value.content);
+
+            const newSent = {
+                id: value.fileId,
+                file: new Blob([value.content]), // Example Blob
+                targetLanguage: tarLang,
+                filePath: value.path
+            };
+            sentArr.push(newSent);
+        }
+    }
+    console.log("filesData", sentArr);
+    await SubmitFiles(userId, sentArr, userJwt);
+    return sentArr.length;
+};
+
+const SubmitFiles = async (userId, filesData, jwt) => {
+    try {
+        const data = await SendFile(userId, filesData, jwt);
+        console.log(data);
+        return data;
+    } catch (error) {
+        console.error('API Error:', error.message);
+        throw error;
+    }
+};
+
 watch(selectedKey, (newVal, oldVal) => {
     console.log(Object.keys(newVal));
     const key = Object.keys(newVal)[0];
@@ -104,7 +237,8 @@ watch(selectedKey, (newVal, oldVal) => {
         fileType.value = "pi pi-fw pi-file";
     }
     else{
-        selectedFile.value = findLabelByKey(fileAttr.nodes, key);
+        // selectedFile.value = findLabelByKey(fileAttr.nodes, key);
+        selectedFile.value = findLabelByKey(nodes.value, key);
         console.log(selectedFile.value);
         fileType.value = 'pi pi-fw pi-folder';
     }
@@ -114,88 +248,102 @@ watch(selectedKey, (newVal, oldVal) => {
 </script>
 
 <template>
-    <div class="filesCtrl">
-        <div class="pre-Ctrl">
-            <div class="dropdown-container">
-                <div class="dropdown-toggle" @click="toggleDropdownPre">
-                <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
-                <i class="pi pi-chevron-down"></i>
-                </div>
-                <div v-if="dropdownVisiblePre" class="dropdown-content">
-                <Tree
-                    v-model:selectionKeys="selectedKey"
-                    v-model:expandedKeys="expandedKeys"
-                    :value="fileAttr.nodes"
-                    selectionMode="single"
-                    @node-select="handleNodeSelectPre"
-                />
-                </div>
-            </div>
-        </div>
-        <div class="arr-Ctrl">
-            <i class="iconfont icon-right"/>
-        </div>
-        <div class="post-Ctrl">
-            <div class="dropdown-container">
-                <div class="dropdown-toggle" @click="toggleDropdownPost">
-                <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
-                <i class="pi pi-chevron-down"></i>
-                </div>
-                <div v-if="dropdownVisiblePost" class="dropdown-content">
-                <Tree
-                    v-model:selectionKeys="selectedKey"
-                    v-model:expandedKeys="expandedKeys"
-                    :value="fileAttr.nodes"
-                    selectionMode="single"
-                    @node-select="handleNodeSelectPost"
-                />
-                </div>
-            </div>
-        </div>
-    
-    </div>
-    <div class="returnStatus">
-        <div v-if="errorBool" class="error">
-            <i class="pi pi-times-circle" />
-            <h1 class="loadingTitle">
-                10/12 文档已翻译
-            </h1>
-            <h3 class="notice done">
-                翻译已完成
-            </h3>
-            <div class="errorActions">
-                <Button label="用原版" severity="secondary" outlined />
-                <Button type="button" label="重试文档" severity="danger" badge="2"/>
-            </div>
-        </div>
-        <div v-else-if="completedBool" class="success">
-            <i class="pi pi-check-circle" />
-            <h1 class="loadingTitle">
-                12/12 文档已翻译
-            </h1>
-            <h3 class="notice done">
-                翻译已完成
-            </h3>
-            <div class="doneActions">
-                <a href="#/codecheck">
-                    <ButtonGrad className="btnTrans" :htmlContent="buttonText" />
-                </a>
-            </div>
-        </div>
-        <div v-else class="loading">
+    <div class="muted-sect">
+        <div v-if="pgLoading" class="loading">
             <div class="loadingScreen">
                 <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
                 <h1 class="loadingTitle">
-                    正在翻译中...
+                    正在访问网页...
                 </h1>
                 <h3 class="notice">
-                    AI 可能会犯错误。请检查重要信息。 
+                    您访问的网页快要好了...
                 </h3>
             </div>
-            <LoadingBar :percentage="loadVal"/>
         </div>
-      
-        
+        <div v-else class="loaded">
+            <div class="filesCtrl">
+                <div class="pre-Ctrl">
+                    <div class="dropdown-container">
+                        <div class="dropdown-toggle" @click="toggleDropdownPre">
+                        <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
+                        <i class="pi pi-chevron-down"></i>
+                        </div>
+                        <div v-if="dropdownVisiblePre" class="dropdown-content">
+                        <Tree
+                            v-model:selectionKeys="selectedKey"
+                            v-model:expandedKeys="expandedKeys"
+                            :value="fileAttr.nodes"
+                            selectionMode="single"
+                            @node-select="handleNodeSelectPre"
+                        />
+                        </div>
+                    </div>
+                </div>
+                <div class="arr-Ctrl">
+                    <i class="iconfont icon-right"/>
+                </div>
+                <div class="post-Ctrl">
+                    <div class="dropdown-container">
+                        <div class="dropdown-toggle" @click="toggleDropdownPost">
+                        <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
+                        <i class="pi pi-chevron-down"></i>
+                        </div>
+                        <div v-if="dropdownVisiblePost" class="dropdown-content">
+                        <Tree
+                            v-model:selectionKeys="selectedKey"
+                            v-model:expandedKeys="expandedKeys"
+                            :value="fileAttr.nodes"
+                            selectionMode="single"
+                            @node-select="handleNodeSelectPost"
+                        />
+                        </div>
+                    </div>
+                </div>
+            
+            </div>
+            <div class="returnStatus">
+                <div v-if="errorBool" class="error">
+                    <i class="pi pi-times-circle" />
+                    <h1 class="loadingTitle">
+                        10/12 文档已翻译
+                    </h1>
+                    <h3 class="notice done">
+                        翻译已完成
+                    </h3>
+                    <div class="errorActions">
+                        <Button label="用原版" severity="secondary" outlined />
+                        <Button type="button" label="重试文档" severity="danger" badge="2"/>
+                    </div>
+                </div>
+                <div v-else-if="completedBool" class="success">
+                    <i class="pi pi-check-circle" />
+                    <h1 class="loadingTitle">
+                        12/12 文档已翻译
+                    </h1>
+                    <h3 class="notice done">
+                        翻译已完成
+                    </h3>
+                    <div class="doneActions">
+                        <a href="#/codecheck" ref="nextLinkRef"  style="display: none;"></a>
+                        <a @click.prevent="prepNext">
+                            <ButtonGrad className="btnTrans" :htmlContent="buttonText" />
+                        </a>
+                    </div>
+                </div>
+                <div v-else class="loading">
+                    <div class="loadingScreen">
+                        <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
+                        <h1 class="loadingTitle">
+                            正在翻译中...
+                        </h1>
+                        <h3 class="notice">
+                            AI 可能会犯错误。请检查重要信息。 
+                        </h3>
+                    </div>
+                    <LoadingBar :percentage="loadVal" :fileName="loadString"/>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -296,6 +444,19 @@ h3.notice.done{
 }
 a {
   text-decoration: none;
+}
+.muted-sect{
+    background-color: #F0F2F5;
+    padding: 2rem;
+    border-radius: 10px;
+}
+.loadingScreen{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 3rem;
 }
 
 </style>

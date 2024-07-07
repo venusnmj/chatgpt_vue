@@ -8,6 +8,7 @@ import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
 import ConfirmationService from 'primevue/confirmationservice';
 
+
 const confirm = useConfirm();
 const toast = useToast();
 
@@ -57,6 +58,10 @@ const props = defineProps({
         type: String,
         required: false,
     },
+    langSelections: {
+        type: Array,
+        required: true,
+    }
 });
 </script>
 
@@ -74,8 +79,9 @@ const props = defineProps({
         <div class="langMenu">
             <select id="lang" name="lang" v-model="selectedValue" @change="selected" v-bind:style="{ color: computedColor }">
                 <option value="" disabled selected class="placeholder">选择翻译语言</option>
-                <option value="english">英语</option>
-                <option value="spanish">西班牙语</option>
+                <option v-for="lang in langSelections" :value="lang">{{ lang  }}</option>
+                <!-- <option value="英语">英语</option>
+                <option value="西班牙语">西班牙语</option> -->
             </select>
             <i class="iconfont icon-down"></i>
         </div>

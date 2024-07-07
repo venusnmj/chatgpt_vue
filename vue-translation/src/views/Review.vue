@@ -2,11 +2,37 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import SelectLang from '../components/SelectLang.vue';
 import { fileAttr } from '../shared/fileAttr.js';
-import PrimeVue from 'primevue/config';
+// import PrimeVue from 'primevue/config';
 import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import Button from 'primevue/button';
 import CodeEditor from '../components/CodeEditor.vue';
+import ProgressSpinner from 'primevue/progressspinner';
+import { GetSetup } from '../utils/apiCalls';
+
+const mimeTypes = {
+    'txt': 'text/plain',
+    'html': 'text/html',
+    'css': 'text/css',
+    'js': 'application/javascript',
+    'json': 'application/json',
+    'java': 'text/x-java-source',
+    'py': 'text/x-python',
+    'sql': 'application/sql',
+    'php': 'application/x-httpd-php',
+    'md': 'text/markdown',
+    'cpp': 'text/x-c++src',
+    'rs': 'text/rust',
+    'go': 'text/x-go',
+    'yaml': 'application/x-yaml',
+    'yml': 'application/x-yaml',
+    // Add more mappings as needed
+};
+
+
+
+
+const apiError = ref(null);
 
 const selectedKey = ref({});
 const fileCode = ref(fileAttr.fileBef);
@@ -14,6 +40,11 @@ const expandedKeys = ref({});
 const nodes = ref(fileAttr.nodes);
 const codeStr = ref('');
 const codeLang = ref('');
+const allLang = ref([]);
+const transArr = ref([]);
+
+const isLoading = ref(true);
+const isSubmitted = ref(false);
 
 const isEditable = computed(() => codeStr.value !== '');
 
@@ -107,25 +138,99 @@ const editCodeBef = (nodeList, keyVal, codeNew) => {
     for (const value of nodeList) {
         if(value.key == keyVal){
             value.code = codeNew;
+            // console.log(value.name);
+            const codeBlob = convertCodeToBlob(codeNew, value.type);
+            console.log("blob: "+codeBlob);
+            value.content = codeBlob;
+
+
+            // Create a URL for the Blob (for example, to use it as a downloadable link)
+            const blobUrl = URL.createObjectURL(codeBlob);
+            // console.log(blobUrl);
+
+            // Example of how to create a download link dynamically
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = value.name;
+            downloadLink.textContent = 'Download Code';
+            value.downloadFile = downloadLink;
+            console.log(downloadLink);
+            // document.body.appendChild(downloadLink);
+
         }
     }
 }
+
+// Function to get MIME type based on file extension
+const getMimeType = (fileName) => {
+    const ext = fileName.toLowerCase();
+    return mimeTypes[ext] || 'application/octet-stream';
+};
+
+
+// Function to convert a code string to a Blob with the correct MIME type
+const convertCodeToBlob = (codeString, fileName) => {
+    const mimeType = getMimeType(fileName);
+    return new Blob([codeString], { type: mimeType });
+};
 
 const checkHighlighted = (nodes) => {
     nodes.forEach(node => {
         if(node.styleClass == 'selectColor'){
             editCodeBef(fileCode.value, node.key, codeStr.value)
+            // console.log('code update '+JSON.stringify(fileCode.value));
         }
         if (node.children) {
             checkHighlighted(node.children);
         }
     })
+    console.log(JSON.stringify(fileCode.value));
 }
+
+const unHighlight = async (nodes) => {
+    nodes.forEach(node => {
+        if(node.styleClass == 'selectColor'){
+            node.styleClass = '';
+        }
+        if (node.children) {
+            unHighlight(node.children);
+        }
+    })
+}
+
+const gettingSetup = async () => {
+  try {
+    const data = await GetSetup();
+    // console.log(data);
+    allLang.value = data.languageOptions;
+    // console.log(allLang.value);
+    // console.log(excludeFiles.value);
+    // console.log(excludeFolders.value);
+    return data;
+  } catch (error) {
+    apiError.value = error.message;
+    throw error;
+  }
+}
+
+onMounted(async () => {
+  
+  await gettingSetup();
+  isLoading.value = false;
+  
+});
 
 onMounted(() => {
     disableKey(nodes.value);
     selectedKey.value = collectKeys(nodes.value);
 });
+
+watch(isSubmitted, (newVal) => {
+    if(newVal==true && nextLinkRef.value){
+
+        nextLinkRef.value.click();
+    }
+}) 
 
 watch(selectedKey, (newVal, oldVal) => {
   if(newVal){
@@ -161,17 +266,82 @@ const handleKeyEvent = (event) => {
     checkHighlighted(nodes.value);
 };
 
+const TranslatableArr = async (nodeList) => {
+    for (const [key, value] of Object.entries(nodeList)) {
+        if(value.selectable){
+            transArr.value.push(value);
+        }
+    }
+}
+
+
+// const SubmitSelected = async (fileArr, tarLang, userId) => {
+//     for (const [key, value] of Object.entries(fileArr)) {
+//         if(value.translate){
+//             console.log(userId + " " + value.fileId + " " + tarLang + " " + value.path);
+//             // console.log("file content is "+value.content);
+//             await SubmitSolo(value.content, tarLang, value.fileId, value.path, userId);
+//             // try {
+//             //     //do i have to keep polling send file?
+//             //     const data = await SendFile(value.content, tarLang, value.fileId, value.path, userId);
+//             //     console.log(data)
+//             //     return data;
+//             // } catch (error) {
+//             //     apiError.value = error.message;
+//             //     throw error;
+//             // }
+//         }
+//     }
+// }
+
+// const SubmitSolo = async (file, tarLang, fileId, filePath, userId) => {
+//     try {
+//         //do i have to keep polling send file?
+//         const data = await SendFile(file, tarLang, fileId, filePath, userId);
+//         console.log(data)
+//         return data;
+//     } catch (error) {
+//         apiError.value = error.message;
+//         throw error;
+//     }
+// }
+
 const nextLinkRef = ref(null);
 
-const submitLanguage = (lang) => {
-    fileAttr.selectedLanguage = lang;
-    fileAttr.fileBef = fileCode;
-    fileAttr.nodes = nodes;
 
-    if (nextLinkRef.value) {
-        nextLinkRef.value.click();
-    }
+
+const submitLanguage = (lang) => {
+    // console.log("language on submit "+lang);
+    isLoading.value = true;
+    transArr.value = [];
+    TranslatableArr(fileCode.value);
+    // await SubmitSelected(transArr.value, lang, userID.value);
+    // console.log("all Translatables: "+ transArr.value );
+    unHighlight(nodes.value);
+
+    fileAttr.selectedLanguage = lang;
+    fileAttr.fileBef = fileCode.value;
+    // console.log('final code val '+ JSON.stringify(fileCode.value));
+    
+    fileAttr.nodes = nodes.value;
+    fileAttr.fileAft = transArr.value
+    console.log(fileAttr.fileAft);
+    //submit all the selected files below
+    //code here
+    
+    
+
+    // console.log("user is "+userID);
+    isLoading.value = false;
+    isSubmitted.value = true;
+
+    // if (nextLinkRef.value) {
+    //     nextLinkRef.value.click();
+    // }
+    
 };
+
+
 
 const onNodeSelect = (node) => {
     if(node.label.includes('.')){
@@ -193,23 +363,38 @@ const onNodeSelect = (node) => {
 </script>
 
 <template>
-    <div class="reviewCode">
-        <div class="directorySect">
-            <div class="directBtn">
-                <Button type="button" icon="pi pi-plus" label="Expand All" @click="expandAll">展开</Button>
-                <Button type="button" icon="pi pi-minus" label="Collapse All" @click="collapseAll">收起</Button>
-            </div>
-            <div class="fileDir" ref="clickDir">
-                <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" @nodeSelect="onNodeSelect" @nodeUnselect="onNodeSelect" class="w-full md:w-[30rem] file-tree">
-                </Tree>
+    <div class="muted-sect">
+        <div v-if="isLoading" class="loading">
+            <div class="loadingScreen">
+                <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
+                <h1 class="loadingTitle">
+                    正在访问网页...
+                </h1>
+                <h3 class="notice">
+                    您访问的网页快要好了...
+                </h3>
             </div>
         </div>
-        <div class="codeSect">
-            <CodeEditor :codeDoc="codeStr" :language="codeLang" :isEditable="isEditable" @update:codeDoc="handleCodeUpdate" @key-event="handleKeyEvent"/>
+        <div v-else class="loaded">
+            <div class="reviewCode">
+                <div class="directorySect">
+                    <div class="directBtn">
+                        <Button type="button" icon="pi pi-plus" label="Expand All" @click="expandAll">展开</Button>
+                        <Button type="button" icon="pi pi-minus" label="Collapse All" @click="collapseAll">收起</Button>
+                    </div>
+                    <div class="fileDir" ref="clickDir">
+                        <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" @nodeSelect="onNodeSelect" @nodeUnselect="onNodeSelect" class="w-full md:w-[30rem] file-tree">
+                        </Tree>
+                    </div>
+                </div>
+                <div class="codeSect">
+                    <CodeEditor :codeDoc="codeStr" :language="codeLang" :isEditable="isEditable" @update:codeDoc="handleCodeUpdate" @key-event="handleKeyEvent"/>
+                </div>
+            </div>
+            <SelectLang nextLink="#/translating" @language-selected="submitLanguage" :langSelections="allLang"/>
+            <a ref="nextLinkRef" href="#/translating" style="display: none;"></a>
         </div>
     </div>
-    <SelectLang nextLink="#/translating" @language-selected="submitLanguage"/>
-    <a ref="nextLinkRef" href="#/translating" style="display: none;"></a>
 </template>
 
 <style>
@@ -279,5 +464,22 @@ const onNodeSelect = (node) => {
 }
 .disableCheck {
     pointer-events: none;
+}
+.completedColor .p-tree-node-label, .completedColor .p-tree-node-icon{
+    color: #16a34a;
+}
+
+.muted-sect{
+    background-color: #F0F2F5;
+    padding: 2rem;
+    border-radius: 10px;
+}
+.loadingScreen{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 3rem;
 }
 </style>

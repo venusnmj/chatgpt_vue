@@ -100,6 +100,8 @@ watch(selectedKey, (newVal, oldVal) => {
         
         codeStr.value = `${node[1].code}`;
 
+        
+
         codeLang.value = node[1].type;
         if(codeLang.value == "py"){
             codeLang.value = "python";
@@ -159,6 +161,7 @@ const handleCodeUpdate = (newCode) => {
 </script>
 
 <template>
+  <div class="muted-sect">
     <div class="filesCtrl">
         <div class="pre-Ctrl">
             <div class="dropdown-container">
@@ -210,7 +213,7 @@ const handleCodeUpdate = (newCode) => {
             </a>
         </div>
     </div>
-    
+  </div>
 </template>
 
 <style scoped>
@@ -308,6 +311,12 @@ div.codeBef, div.codeAft{
     display: flex;
     flex-direction: column;
     gap: 2rem;
+}
+
+.muted-sect{
+    background-color: #F0F2F5;
+    padding: 2rem;
+    border-radius: 10px;
 }
 
 </style>

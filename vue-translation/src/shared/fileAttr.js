@@ -4,6 +4,7 @@ export const fileAttr = reactive({
   selectedLanguage: null,
   nodes: [],
   fileBef: [],
-  fileAtr: [],
+  fileAft: [],
   userId: null,
+  userJwt: '',
 });

@@ -11,7 +11,7 @@ import { GetSetup } from './utils/apiCalls';
 
 import ProgressSpinner from 'primevue/progressspinner';
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 // import Home from './Home.vue'
 // import Review from './Views/Review.vue'
 
@@ -22,6 +22,10 @@ const fileCnt = ref(0);
 const userCnt = ref(0);
 const appName = ref('');
 const appLogo = ref('');
+const excludeFiles = ref([]);
+const excludeFolders = ref([]);
+
+const apiError = ref(null);
 
 
 const gettingSetup = async () => {
@@ -32,12 +36,31 @@ const gettingSetup = async () => {
     userCnt.value = data.totalUser;
     appName.value = data.websiteName;
     appLogo.value = data.logoUrl;
+    excludeFiles.value = data.excludedFileTypes;
+    excludeFolders.value = data.excludedDirectories;
     return data;
   } catch (error) {
+    console.log(error.message);
     apiError.value = error.message;
     throw error;
   }
 }
+
+const testProxy = async () => {
+  try {
+    const response = await fetch('http://192.168.31.6:8080/public/website-info');
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
+
+
 
 const routes = {
   '/': DragFile,
@@ -76,7 +99,7 @@ const firstPage = computed(()=>{
 
 
 onMounted(async () => {
-  
+  // testProxy();
   await gettingSetup();
   isLoading.value = false;
   
@@ -96,17 +119,25 @@ onMounted(async () => {
         </h3>
     </div>
   </div>
-  <div v-else>
+  <div v-else class="fullPage">
     <link rel="stylesheet" href="https://at.alicdn.com/t/c/font_4585610_7vp1too427h.css">
     <Header :userCount="userCnt" :fileCount="fileCnt" :appTitle="appName" :logoSrc="appLogo" />
     <Steps v-if="firstPage"/>
     <div class="container">
-      <div class="muted-sect">
+      <div class="changing-sect">
           <!-- <component :is="currentView" :selectedLanguage="currentLanguage"/> -->
           <component :is="currentView"/>
       </div>
     </div>
   </div>
+  <!-- <div class="pastHistory" v-if="firstPage">
+    <h3>
+      已翻译的文件
+    </h3>
+    <div class="pastFiles">
+      <Button v-for="history in fileHistory" :label="history.filePath.substring(history.filePath.lastIndexOf('/') + 1)" icon="pi pi-fw pi-download" severity="secondary" text raised/>
+    </div>
+  </div> -->
 
 </template>
 
@@ -114,9 +145,14 @@ onMounted(async () => {
 .container{
     padding: 1rem 4rem;
 }
-.muted-sect{
+.loading{
+  width: 100vw;
+  height: 100vh;
+}
+
+/* .muted-sect{
     background-color: #F0F2F5;
     padding: 2rem;
     border-radius: 10px;
-}
+} */
 </style>

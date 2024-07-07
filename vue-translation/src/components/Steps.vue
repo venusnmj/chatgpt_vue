@@ -30,7 +30,8 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        padding: 1rem 20%;
+        padding: 1rem 4rem;
+        width: 100%;
     }
     .step {
         display: flex;

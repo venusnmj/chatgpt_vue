@@ -2,10 +2,9 @@
 import { onMounted, ref, watch } from 'vue';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { languages } from '@codemirror/language-data';
 import { autocompletion } from '@codemirror/autocomplete';
 import { oneDark } from '@codemirror/theme-one-dark'; 
-
+import { languages } from '@codemirror/language-data';
 import { javascript } from '@codemirror/lang-javascript';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
@@ -14,6 +13,39 @@ import { python } from '@codemirror/lang-python';
 import { json } from '@codemirror/lang-json';
 import { xml } from '@codemirror/lang-xml';
 import { sql } from '@codemirror/lang-sql';
+import { php } from '@codemirror/lang-php';
+import { markdown } from '@codemirror/lang-markdown';
+import { cpp } from '@codemirror/lang-cpp';
+import { rust } from '@codemirror/lang-rust';
+import { go } from '@codemirror/lang-go';
+import { yaml } from '@codemirror/lang-yaml';
+
+const languageExtensions = {
+  javascript,
+  css,
+  html,
+  java,
+  python,
+  json,
+  xml,
+  sql,
+  php,
+  markdown,
+  cpp,
+  rust,
+  go,
+  yaml,
+};
+
+const codeTypes = {
+    'js': 'javascript',
+    'py': 'python',
+    'md': 'markdown',
+    'rs': 'rust',
+    'go': 'go',
+    'yml': 'yaml',
+};
+
 
 const props = defineProps({
   codeDoc: {
@@ -30,20 +62,13 @@ const props = defineProps({
   },
 });
 
+const getCodeType = (ext) => {
+    return codeTypes[ext] || ext;
+};
+
 const emit = defineEmits(['update:codeDoc', 'key-event']);
 const editor = ref(null);
 let view;
-
-const languageExtensions = {
-  javascript,
-  css,
-  html,
-  java,
-  python,
-  json,
-  xml,
-  sql
-};
 
 const setupEditor = (doc, lang, editable) => {
   const langExtension = languageExtensions[lang];
@@ -81,24 +106,28 @@ const setupEditor = (doc, lang, editable) => {
 };
 
 onMounted(() => {
-  setupEditor(props.codeDoc, props.language, props.isEditable);
+  const langExt = getCodeType(props.language);
+  setupEditor(props.codeDoc, langExt, props.isEditable);
 });
 
 watch(() => props.codeDoc, (newCode) => {
   if (view && newCode !== view.state.doc.toString()) {
-    setupEditor(newCode, props.language, props.isEditable);
+    const langExt = getCodeType(props.language);
+    setupEditor(newCode, langExt, props.isEditable);
   }
 });
 
 watch(() => props.language, (newLang) => {
   if (view) {
-    setupEditor(view.state.doc.toString(), newLang, props.isEditable);
+    const langExt = getCodeType(newLang);
+    setupEditor(view.state.doc.toString(), langExt, props.isEditable);
   }
 });
 
 watch(() => props.isEditable, (newEditable) => {
   if (view) {
-    setupEditor(view.state.doc.toString(), props.language, newEditable);
+    const langExt = getCodeType(props.language);
+    setupEditor(view.state.doc.toString(), langExt, newEditable);
   }
 });
 </script>

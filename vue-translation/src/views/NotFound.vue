@@ -14,11 +14,14 @@ onMounted(() => {
 </script>
 
 <template>
-<div class="central">
-    <h1>非常抱歉，你访问的页面不见了</h1>
-    <h3>{{timerVal}}秒后回去首页</h3>
-    <a ref="nextLinkRef" href="#/" style="display: none;"></a>
+<div class="muted-sect">
+    <div class="central">
+        <h1>非常抱歉，你访问的页面不见了</h1>
+        <h3>{{timerVal}}秒后回去首页</h3>
+        <a ref="nextLinkRef" href="#/" style="display: none;"></a>
+    </div>
 </div>
+
 </template>
 
 <style scope>
@@ -30,5 +33,10 @@ onMounted(() => {
 }
 .central h3{
     color: #006eff;
+}
+.muted-sect{
+    background-color: #F0F2F5;
+    padding: 2rem;
+    border-radius: 10px;
 }
 </style>
