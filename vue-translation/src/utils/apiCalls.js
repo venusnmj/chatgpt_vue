@@ -279,7 +279,7 @@ export const PollingFile = async (fileId) => {
             
         }
     );
-}
+} 
 
 export const RetryFile = async (fileId, file, lang, filePath) => {
     //fileId for 500
