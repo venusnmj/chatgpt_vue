@@ -6,6 +6,7 @@ import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import CodeEditor from '../components/CodeEditor.vue'
 import ButtonGrad from '../components/ButtonGrad.vue'
+import { GetTranslation } from '../utils/apiCalls';
 
 
 const selectedKey = ref(null);
@@ -13,12 +14,16 @@ const dropdownVisiblePre = ref(false);
 const dropdownVisiblePost = ref(false);
 const expandedKeys = ref({});
 const fileCode = ref(fileAttr.fileBef);
+const transArr = ref(fileAttr.fileAft);
+const userID = ref(fileAttr.userId);
+const storeJwt = ref(fileAttr.userJwt);
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
 
 const agnText = ref(`重新再来`);
-const downloadText = ref('下载翻译文档');
+const downloadText = ref('下载压缩包');
 const codeStr = ref();
+const codeResult = ref();
 const codeLang = ref();
 
 
@@ -58,9 +63,34 @@ const collectKeys = (nodes, keys = {}) => {
   return keys;
 };
 
-onMounted(() => {
+
+const GetTranslated = async (userId, fileId, userJwt) => {
+    try {
+        const data = await GetTranslation(userId, fileId, userJwt);
+        console.log(data.content)
+        return data.content;
+    } catch (error) {
+        apiError.value = error.message;
+        throw error;
+    }
+}
+
+const addCode = async (fileArr) => {
+  for (const [key, value] of Object.entries(fileArr)) {
+    if(value.translate && value.completed){
+      value.transCode = await GetTranslated(userID.value, value.fileId, storeJwt.value);
+    }
+    else if(!value.translate){
+      value.transCode = value.code;
+    }
+  }
+}
+
+onMounted( async () => {
+  await addCode(fileAttr.fileBef);
   expandedKeys.value = collectKeys(fileAttr.nodes);
   selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
+
 });
 
 const findNodeByKey = (nodeList, searchKey) => {
@@ -99,6 +129,7 @@ watch(selectedKey, (newVal, oldVal) => {
         console.log(node[1].code);
         
         codeStr.value = `${node[1].code}`;
+        codeResult.value = `${node[1].transCode}`;
 
         
 
@@ -135,6 +166,7 @@ watch(selectedKey, (newVal, oldVal) => {
             if(node !== null){
               console.log("node is "+ node[1].name);
               codeStr.value = `${node[1].code}`;
+              codeResult.value = `${node[1].transCode}`;
 
               codeLang.value = node[1].type;
               if(codeLang.value == "py"){
@@ -156,6 +188,9 @@ watch(selectedKey, (newVal, oldVal) => {
 
 const handleCodeUpdate = (newCode) => {
     codeStr.value = newCode;
+};
+const handleResultUpdate = (newCode) => {
+    codeResult.value = newCode;
 };
 
 </script>
@@ -204,10 +239,10 @@ const handleCodeUpdate = (newCode) => {
     <div class="endBtn">
         <div class="codeBef">
             <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate"/>
-            <ButtonGrad  className="btnTrans btnRight" :htmlContent="downloadText"/>
+            <ButtonGrad className="btnTrans btnRight" :htmlContent="downloadText"/>
         </div>
         <div class="codeAft">
-            <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate"/>
+            <CodeEditor :codeDoc="codeResult" :language="codeLang" @update:codeDoc="handleResultUpdate"/>
             <a href="#/">
                 <ButtonGrad className="btnTrans" :htmlContent="agnText"/>
             </a>

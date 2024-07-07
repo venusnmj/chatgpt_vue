@@ -7,6 +7,7 @@ import Review from './views/Review.vue'
 import Translating from './views/Translating.vue'
 import CodeCheck from './views/CodeCheck.vue'
 import NotFound from './views/NotFound.vue'
+import NotAvailable from './views/NotAvailable.vue';
 import { GetSetup } from './utils/apiCalls';
 
 import ProgressSpinner from 'primevue/progressspinner';
@@ -66,7 +67,8 @@ const routes = {
   '/': DragFile,
   '/review': Review,
   '/translating': Translating,
-  '/codecheck': CodeCheck
+  '/codecheck': CodeCheck,
+  '/notavailable': NotAvailable
 }
 
 const currentPath = ref(window.location.hash)

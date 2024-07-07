@@ -8,7 +8,7 @@ import LoadingBar from '../components/LoadingBar.vue';
 import ProgressSpinner from 'primevue/progressspinner';
 import Button from 'primevue/button';
 import ButtonGrad from '../components/ButtonGrad.vue'
-import { SendFile, PollingFile, RetryFile } from '../utils/apiCalls';
+import { SendFile, PollingFile, RetryFile, GetTranslation } from '../utils/apiCalls';
 
 
 const apiError = ref(null);
@@ -80,7 +80,7 @@ const selectedKeyLabel = computed(() => {
   return selectedFile.value ? selectedFile.value : '选择文件';
 });
 
-const collectKeys = (nodes, keys = {}) => {
+const collectKeys = async (nodes, keys = {}) => {
   nodes.forEach(node => {
     keys[node.key] = true;
     if (node.children) {
@@ -113,21 +113,45 @@ const doneClass = (nodes, keyVal) => {
     console.log(nodes);
 }
 
-const PollingFiles = async (fileArr, tarLang, total) => {
+const delay = (time) => {
+  return new Promise(res => {
+    setTimeout(res,time)
+  });
+}
+
+// const GetTranslated = async (userId, fileId, userJwt) => {
+//     try {
+//         const data = await GetTranslation(userId, fileId, userJwt);
+//         console.log(data.content)
+//         return data.content;
+//     } catch (error) {
+//         apiError.value = error.message;
+//         throw error;
+//     }
+// }
+
+const PollingFiles = async (fileArr, total, userId, userJwt) => {
     let done = 0;
+    let state = '';
     // let allProcess = 0;
     for (const [key, value] of Object.entries(fileArr)) {
         if(value.translate){
-            let state = await HandlePolling(value.fileId, value.content, tarLang, value.path);
+            state = await HandlePolling(userId , value.fileId, userJwt);
+            while(state == 'processing'){
+                console.log("to translate "+value.key + " " + value.path);
+                await delay(300);
+                state = await HandlePolling(userId, value.fileId, userJwt);
+            }
             if(state == 'completed'){
                 done++;
                 value.completed = true;
+                console.log("old completed status true:" + value.key + Object.values(fileAttr.fileBef));
+                // value.code = await GetTranslated(userId, value.fileId, userJwt)
             }
+            
         }
     }
-    if(done == total){
-        completedBool.value = true;
-    }
+    
     console.log(done + "/" + total);
     console.log(Math.floor((done/total)*100));
     loadVal.value = Math.floor((done/total)*100);
@@ -136,9 +160,17 @@ const PollingFiles = async (fileArr, tarLang, total) => {
     
 }
 
-const HandlePolling = async (fileId, file, tarLang, path) => {
+const completedLoad = async (done, total) => {
+    if(done == total){
+        loadVal.value = 100;
+        delay(300);
+        completedBool.value = true;
+    }
+}
+
+const HandlePolling = async (userId, fileId, userJwt) => {
     try {
-        const data = await PollingFile(fileId);
+        const data = await PollingFile(userId, fileId, userJwt);
         console.log(data.status)
         return data.status;
     } catch (error) {
@@ -148,23 +180,33 @@ const HandlePolling = async (fileId, file, tarLang, path) => {
 }
 
 onMounted(async () => {
+    sentArr.value = [];
+    console.log("start of translating "+ JSON.stringify(fileAttr.fileBef));
+    expandedKeys.value = await collectKeys(nodes.value);
+    selectedFile.value = findLabelByKey(nodes.value, 0);
+
     allProcess.value = await SubmitSelected(transArr.value, selectLang.value, userID.value, storeJwt.value);
     console.log("all submitted processes "+allProcess.value)
     pgLoading.value = false;
 
-    doneProcess.value = await PollingFiles(transArr.value, selectLang.value, allProcess.value);
-    console.log(transArr.value);
+    console.log("before polling: "+ JSON.stringify(fileAttr.fileBef));
+    //PollingFiles writes on new array
+    doneProcess.value = await PollingFiles(transArr.value, allProcess.value, userID.value, storeJwt.value);
+    await completedLoad(doneProcess.value, allProcess.value);
+    console.log("after polling: "+ JSON.stringify(fileAttr.fileBef));
+    console.log("array after: "+ JSON.stringify(transArr.value));
     addCompleted(transArr.value, nodes.value);
+    console.log("end of mounting: "+ JSON.stringify(fileAttr.fileBef));
 })
 
-onMounted(() => {
-    sentArr.value = [];
-    // console.log(fileAttr.fileBef);
-    expandedKeys.value = collectKeys(nodes.value);
-    selectedFile.value = findLabelByKey(nodes.value, 0);
-    // expandedKeys.value = collectKeys(fileAttr.nodes);
-    // selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
-});
+// onMounted(() => {
+//     sentArr.value = [];
+//     console.log("start of translating "+ JSON.stringify(fileAttr.fileBef));
+//     expandedKeys.value = collectKeys(nodes.value);
+//     selectedFile.value = findLabelByKey(nodes.value, 0);
+//     // expandedKeys.value = collectKeys(fileAttr.nodes);
+//     // selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
+// });
 
 const findNodeByKey = (nodeList, searchKey) => {
     for (const [key, value] of Object.entries(nodeList)) {
@@ -191,7 +233,10 @@ const findLabelByKey = (nodes, searchKey) => {
   return null;
 };
 
-const prepNext = () => {
+const prepNext = async () => {
+    // fileAttr.fileAft = transArr.value;
+    console.log("check prior content: "+ JSON.stringify(fileAttr.fileBef));
+    console.log("check translated content: "+ JSON.stringify(fileAttr.fileAft));
     nextLinkRef.value.click();
 }
 
@@ -318,7 +363,7 @@ watch(selectedKey, (newVal, oldVal) => {
                 <div v-else-if="completedBool" class="success">
                     <i class="pi pi-check-circle" />
                     <h1 class="loadingTitle">
-                        12/12 文档已翻译
+                        {{`${doneProcess}/${allProcess}`}} 文档已翻译
                     </h1>
                     <h3 class="notice done">
                         翻译已完成

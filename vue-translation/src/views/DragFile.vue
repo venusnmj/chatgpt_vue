@@ -28,7 +28,9 @@ const loadVal = ref(0);
 const hasFiles = computed(() => files.value.length > 0);
 const fileArea = ref(null);
 const fileInput = ref(null);
-const nextLinkRef = ref(null)
+const nextLinkRef = ref(null);
+const serverDown = ref(null)
+
 
 const apiError = ref(null);
 // const fileTranslatable = ref(null);
@@ -405,6 +407,7 @@ const generateUserId = async () => {
     await getIpAddress();
   } catch (e) {
     console.error(e);
+    serverDown.value.click();
   }
   const date = new Date();
   currentDate.value = date.toISOString().substring(0,10);
@@ -482,7 +485,9 @@ onMounted(async () => {
 </script>
 
 <template>
+  
   <div class="muted-sect">
+    <a ref="serverDown" href="#/notavailable" style="display: none;"></a>
     <div v-if="isLoading" class="loading">
       <div class="loadingScreen">
           <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
@@ -563,6 +568,7 @@ onMounted(async () => {
         <div class="pastFiles">
           <Button v-for="history in fileHistory" :label="history.filePath.substring(history.filePath.lastIndexOf('/') + 1)" icon="pi pi-fw pi-download" severity="secondary" text raised/>
         </div>
+
       </div>
     </div>
   </div>

@@ -270,16 +270,51 @@ export const SendFile = async (uid, filesData, jwtToken) => {
 //     );
 // }
 
-export const PollingFile = async (fileId) => {
-    return(
-        {
-            "fileId": "file1",
-            // "status": "processing",
-            "status": "completed"
-            
+export const PollingFile = async (uid, fileId, jwtToken) => {
+    const url = `http://192.168.31.6:8080/user/translate/${uid}/status`;
+    const params = new URLSearchParams({ id: fileId });
+
+    try {
+        const response = await fetch(`${url}?${params}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 400) {
+                throw new Error('Bad Request: Invalid parameters.');
+            } else if (response.status === 404) {
+                const errorData = await response.json();
+                throw new Error(errorData.status || 'ID not found');
+            } else {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
         }
-    );
-} 
+
+        const data = await response.json();
+        console.log('Update Status Success:', data);
+        return data;
+    } catch (error) {
+        console.error('Error updating file status:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
+
+
+// export const PollingFile = async (fileId) => {
+//     return(
+//         {
+//             "fileId": "file1",
+//             // "status": "processing",
+//             "status": "completed"
+            
+//         }
+//     );
+// } 
 
 export const RetryFile = async (fileId, file, lang, filePath) => {
     //fileId for 500
@@ -292,10 +327,45 @@ export const RetryFile = async (fileId, file, lang, filePath) => {
     );
 }
 
-export const GetTranslation = async (fileId) => {
-    return(
-        {
-            "fileContent": "translated code here"
+export const GetTranslation = async (uid, fileId, jwtToken) => {
+    const url = `http://192.168.31.6:8080/user/translate/${uid}/content`;
+    const params = new URLSearchParams({ id: fileId });
+
+    try {
+        const response = await fetch(`${url}?${params}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                const errorData = await response.json();
+                throw new Error(errorData.status || 'ID not found');
+            } else if (response.status === 406) {
+                const errorData = await response.json();
+                throw new Error('Translation not completed: ' + (errorData.content || ''));
+            } else {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
         }
-    )
-}
+
+        const data = await response.json();
+        console.log('Fetch Translated Content Success:', data);
+        return data;
+    } catch (error) {
+        console.error('Error fetching translated content:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
+
+// export const GetTranslation = async (fileId) => {
+//     return(
+//         {
+//             "fileContent": "translated code here"
+//         }
+//     )
+// }
