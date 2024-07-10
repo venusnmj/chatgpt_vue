@@ -4,7 +4,7 @@ import JSZip from 'jszip';
 import LoadingBar from '../components/LoadingBar.vue';
 import ButtonGrad from '../components/ButtonGrad.vue';
 import { fileAttr } from '../shared/fileAttr.js';
-import { GetTranslatable, GetUserIp, GetSetup, GetHistory, PutUserId, AuthenticateUser } from '../utils/apiCalls';
+import { GetTranslatable, GetUserIp, GetSetup, GetHistory, PutUserId, AuthenticateUser, PollingFile } from '../utils/apiCalls';
 import { getCookie, setCookie } from '../utils/getcookie';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
@@ -435,6 +435,19 @@ const gettingSetup = async () => {
   }
 }
 
+
+const HandlePolling = async (userId, fileId, userJwt) => {
+    try {
+        // const data = await PollingFile(userId, fileId, userJwt);
+        // console.log(data.status)
+        // return data.status;
+        return 'processing';
+    } catch (error) {
+        apiError.value = error.message;
+        throw error;
+    }
+}
+
 const gettingHistory = async (userId, jwt) => {
   try {
     const data = await GetHistory(userId, jwt);
@@ -447,6 +460,14 @@ const gettingHistory = async (userId, jwt) => {
       hasHistory.value = true;
       const cleanHis = JSON.parse(data);
       const lastTen = cleanHis.slice(-10, cleanHis.length);
+      console.log(lastTen.length);
+      for(const process of lastTen){
+        console.log(process.fileId);
+        const historyStatus = await HandlePolling(userId, process.fileId, jwt);
+        console.log(historyStatus);
+        process.status = historyStatus;
+      }
+      
       fileHistory.value = lastTen;
     }
     // console.log(excludeFiles.value);
@@ -546,10 +567,10 @@ onMounted(async () => {
         </div>
       </div>
       <div class="filesAccepted">
-        <Button label="什么文件/文件夹可以上传?" @click="visible = true" link />
-        <Dialog v-model:visible="visible" maximizable modal header="什么文件/文件夹可以上传?" :style="{ width: '50rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+        <Button label="什么文件/文件夹不可以上传?" @click="visible = true" link />
+        <Dialog v-model:visible="visible" maximizable modal header="什么文件/文件夹不可以上传?" :style="{ width: '50rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
           <p class="m-0">
-            可接受的文件: &nbsp;
+            不可接受的文件: &nbsp;
           </p>
           <p>
               <span v-for="file in excludeFiles">
@@ -558,7 +579,7 @@ onMounted(async () => {
           </p>
           <br>
           <p class="m-0">
-            可接受的文件夹: &nbsp;
+            不可接受的文件夹: &nbsp;
           </p>
           <p>
               <span v-for="folder in excludeFolders">

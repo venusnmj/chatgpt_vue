@@ -1,6 +1,6 @@
 export const GetSetup = async () => {
     try {
-      const response = await fetch('http://192.168.31.6:8080/public/website-info');
+      const response = await fetch('http://192.168.31.239:8080/public/website-info');
   
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -34,7 +34,7 @@ export const GetSetup = async () => {
   
   export const GetUserIp = async () => {
   try {
-    const response = await fetch('http://192.168.31.6:8080/public/get-ip', {
+    const response = await fetch('http://192.168.31.239:8080/public/get-ip', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export const GetSetup = async () => {
 
 // export const PutUserId = async (uid, ipAddress) => {
 //     try {
-//       const response = await fetch(`http://192.168.31.6:8080/public/${uid}/create`, {
+//       const response = await fetch(`http://192.168.31.239:8080/public/${uid}/create`, {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
         console.log("Form Data: " + formData.get("ipAddress"));
 
-        const response = await fetch(`http://192.168.31.6:8080/public/${uid}/create`, {
+        const response = await fetch(`http://192.168.31.239:8080/public/${uid}/create`, {
             method: 'POST',
             body: formData
         });
@@ -134,7 +134,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
 export const AuthenticateUser = async (uid) => {
     try {
-        const response = await fetch('http://192.168.31.6:8080/authenticate/user', {
+        const response = await fetch('http://192.168.31.239:8080/authenticate/user', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ export const AuthenticateUser = async (uid) => {
 export const GetHistory = async ( uid, jwt) => {
     try {
         // console.log('history of '+ jwt)
-        const response = await fetch(`http://192.168.31.6:8080/user/files/${uid}/file-names`, {
+        const response = await fetch(`http://192.168.31.239:8080/user/files/${uid}/file-names`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
@@ -184,7 +184,7 @@ export const GetHistory = async ( uid, jwt) => {
 export const GetTranslatable = async (uid, userFiles, jwt) => {
     console.log(userFiles); // Make sure this logs the correct array of strings
     try {
-        const response = await fetch(`http://192.168.31.6:8080/user/files/${uid}/upload`, {
+        const response = await fetch(`http://192.168.31.239:8080/user/files/${uid}/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
@@ -226,7 +226,7 @@ export const GetTranslatable = async (uid, userFiles, jwt) => {
 
 
 export const SendFile = async (uid, filesData, jwtToken) => {
-    const url = `http://192.168.31.6:8080/user/translate/${uid}/upload`;
+    const url = `http://192.168.31.239:8080/user/translate/${uid}/upload`;
     const formData = new FormData();
 
     // Append each file and its metadata to the FormData object
@@ -271,7 +271,7 @@ export const SendFile = async (uid, filesData, jwtToken) => {
 // }
 
 export const PollingFile = async (uid, fileId, jwtToken) => {
-    const url = `http://192.168.31.6:8080/user/translate/${uid}/status`;
+    const url = `http://192.168.31.239:8080/user/translate/${uid}/status`;
     const params = new URLSearchParams({ id: fileId });
 
     try {
@@ -328,7 +328,7 @@ export const RetryFile = async (fileId, file, lang, filePath) => {
 }
 
 export const GetTranslation = async (uid, fileId, jwtToken) => {
-    const url = `http://192.168.31.6:8080/user/translate/${uid}/content`;
+    const url = `http://192.168.31.239:8080/user/translate/${uid}/content`;
     const params = new URLSearchParams({ id: fileId });
 
     try {

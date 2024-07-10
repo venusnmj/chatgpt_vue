@@ -14,7 +14,7 @@ export default defineConfig({
   // server: {
   //   proxy: {
   //     '/public': {
-  //       target: 'http://192.168.31.6:8080',
+  //       target: 'http://192.168.31.239:8080',
   //       changeOrigin: true,
   //       rewrite: (path) => path.replace(/^\/public/, ''),
   //     },
