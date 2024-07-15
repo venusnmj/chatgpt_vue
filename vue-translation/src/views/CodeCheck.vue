@@ -39,13 +39,29 @@
         </div>
       </div>
     </div>
-    <div class="endBtn">
-      <div class="codeBef">
+    <div class="modelChoose">
+        <div class="modelDisplay">
+            <Chip label="Original Content" className="chip-disabled"/>
+        </div>
+        <div class="modelDisplay">
+            <Chip v-for="mod in selectModel" label="mod" />
+            <!-- <Chip label="Action" className="chipModel"/> -->
+            <!-- <Chip label="Comedy" className="chipModel"/> -->
+        </div>
+    </div>
+    <div class="codeHandle">
+        <div class="codeBef">
         <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate"/>
-        <ButtonGrad className="btnTrans btnRight" :htmlContent="downloadText" @click="handleDownloadClick"/>
       </div>
       <div class="codeAft">
         <CodeEditor :codeDoc="codeResult" :language="codeLang" @update:codeDoc="handleResultUpdate"/>
+      </div>
+    </div>
+    <div class="endBtn">
+      <div class="btnBtm">
+        <ButtonGrad className="btnTrans btnRight" :htmlContent="downloadText" @click="handleDownloadClick"/>
+      </div>
+      <div class="btnBtm">
         <a href="#/">
           <ButtonGrad className="btnTrans" :htmlContent="agnText"/>
         </a>
@@ -65,6 +81,8 @@ import ButtonGrad from '../components/ButtonGrad.vue';
 import { GetTranslation } from '../utils/apiCalls';
 import JSZip from 'jszip';
 import FileSaver from 'file-saver';
+import Chip from 'primevue/chip';
+
 
 const selectedKey = ref(null);
 const dropdownVisiblePre = ref(false);
@@ -74,6 +92,8 @@ const fileCode = ref(fileAttr.fileBef);
 const transArr = ref(fileAttr.fileAft);
 const userID = ref(fileAttr.userId);
 const storeJwt = ref(fileAttr.userJwt);
+const selectModel = ref(fileAttr.selectedModel);
+
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
 
@@ -117,10 +137,10 @@ const collectKeys = (nodes, keys = {}) => {
     return keys;
 };
 
-const GetTranslated = async (userId, fileId, userJwt) => {
+const GetTranslated = async (userId, fileId, userJwt, modelName) => {
     try {
-        const data = await GetTranslation(userId, fileId, userJwt);
-        console.log(data.content);
+        const data = await GetTranslation(userId, fileId, userJwt, modelName);
+        console.log("new GetTranslation"+data.content);
         return data.content;
     } catch (error) {
         console.error('Error getting translation:', error.message);
@@ -131,7 +151,18 @@ const GetTranslated = async (userId, fileId, userJwt) => {
 const addCode = async (fileArr) => {
     for (const [key, value] of Object.entries(fileArr)) {
         if (value.translate && value.completed) {
-            value.transCode = await GetTranslated(userID.value, value.fileId, storeJwt.value);
+            console.log("no. of models " + selectModel.value.length);
+            console.log("model? "+ value.models)
+            const multiModel = [];
+            for(var i=0; i<selectModel.value.length; i++){
+                // value.transCode.push()
+                // const codeName = "code"+selectModel.value[i];
+                multiModel.push(await GetTranslated(userID.value, value.fileId, storeJwt.value, selectModel.value[i]));
+            }
+            // console.log('multiModel ' + multiModel);
+            value.transCode = multiModel;
+            console.log('multiModel ' + value.transCode.length);
+            console.log('final '+value.transCode);
         } else if (!value.translate) {
             value.transCode = value.code;
         }
@@ -152,6 +183,7 @@ const updateTreeWithTransCode = (nodes, fileArr) => {
 };
 
 onMounted(async () => {
+    console.log("model on codecheck pg: "+ JSON.stringify(selectModel.value) )
     await addCode(fileAttr.fileBef);
     expandedKeys.value = collectKeys(fileAttr.nodes);
     selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
@@ -363,11 +395,48 @@ div.codeBef, div.codeAft {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    background-color: #282c34;
+    border-radius: 0.5rem;
+}
+
+div.btnBtm {
+    width: 49%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+div.codeBef, div.codeAft {
+    height: 100%;
 }
 
 .muted-sect {
     background-color: #F0F2F5;
     padding: 2rem;
     border-radius: 10px;
+}
+.codeHandle {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    /* padding: 1rem 0rem; */
+    max-height: 400px;
+    overflow-y: scroll;
+}
+.modelChoose{
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5rem 0rem;
+}
+.modelDisplay{
+    width: 49%;
+    display: flex;
+    gap: 0.5rem;
+    /* justify-content: center; */
+}
+.p-chip{
+    background-color: #fff;
+    padding: 0.2rem 1rem;
 }
 </style>

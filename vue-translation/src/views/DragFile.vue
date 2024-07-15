@@ -8,6 +8,8 @@ import { GetTranslatable, GetUserIp, GetSetup, GetHistory, PutUserId, Authentica
 import { getCookie, setCookie } from '../utils/getcookie';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+
+import LoadingSection from '../components/LoadingSection.vue';
 import ProgressSpinner from 'primevue/progressspinner';
 
 
@@ -32,7 +34,6 @@ const nextLinkRef = ref(null);
 const serverDown = ref(null)
 
 
-const apiError = ref(null);
 // const fileTranslatable = ref(null);
 const listTrans = ref(null); 
 const userIp = ref(null);
@@ -50,6 +51,10 @@ const excludeFolders = ref([]);
 
 const hasHistory = ref(false);
 const fileHistory = ref([]);
+
+const apiError = ref(null);
+const emit = defineEmits(['errorBool']);
+const hasError = ref(false);
 
 
 const computedWidth = computed(() => {
@@ -376,6 +381,7 @@ const getIpAddress = async () => {
     return data;
   } catch (error) {
     apiError.value = error.message;
+
     throw error;
   }
 }
@@ -407,7 +413,10 @@ const generateUserId = async () => {
     await getIpAddress();
   } catch (e) {
     console.error(e);
-    serverDown.value.click();
+
+    // serverDown.value.click();
+    hasError.value = true;
+    emit('errorBool', true);
   }
   const date = new Date();
   currentDate.value = date.toISOString().substring(0,10);
@@ -422,17 +431,15 @@ const generateUserId = async () => {
 }
 
 const gettingSetup = async () => {
-  try {
-    const data = await GetSetup();
-    excludeFiles.value = data.excludedFileTypes;
-    excludeFolders.value = data.excludedDirectories;
+    console.log('firstpg setup: '+ JSON.stringify(fileAttr.setupData));
+    // const data = await GetSetup();
+    // if((data.excludedFileTypes == 'Error fetching data' || data.excludedDirectories == 'Error fetching data')){
+    //   const data = await GetSetup();
+    // }
+    excludeFiles.value = fileAttr.setupData.excludedFileTypes;
+    excludeFolders.value = fileAttr.setupData.excludedDirectories;
     // console.log(excludeFiles.value);
     // console.log(excludeFolders.value);
-    return data;
-  } catch (error) {
-    apiError.value = error.message;
-    throw error;
-  }
 }
 
 
@@ -514,8 +521,9 @@ onMounted(async () => {
 <template>
   
   <div class="muted-sect">
-    <a ref="serverDown" href="#/notavailable" style="display: none;"></a>
-    <div v-if="isLoading" class="loading">
+    <!-- <a ref="serverDown" href="#/notavailable" style="display: none;"></a> -->
+    
+    <!-- <div v-if="isLoading" class="loading">
       <div class="loadingScreen">
           <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
           <h1 class="loadingTitle">
@@ -525,7 +533,8 @@ onMounted(async () => {
               您访问的网页快要好了...
           </h3>
       </div>
-    </div>
+    </div> -->
+    <LoadingSection v-if="isLoading" />
     <div v-else class="loaded">
       <div
         class="file-drop-area"
@@ -690,14 +699,14 @@ li {
 .p-button-link:not(:disabled):hover{
   color: #0273FF;
 }
-.loadingScreen{
+/* .loadingScreen{
     display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
     gap: 1rem;
     padding: 3rem;
-}
+} */
 .pastHistory{
   padding: 2rem;
   display: flex;

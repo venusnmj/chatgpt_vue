@@ -1,51 +1,55 @@
 <script setup>
 import { ref, computed } from 'vue';
 import ButtonGrad from './ButtonGrad.vue';
-
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from "primevue/useconfirm";
-import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
-import ConfirmationService from 'primevue/confirmationservice';
-
+import MultiSelect from 'primevue/multiselect';
+import Tooltip from 'primevue/tooltip';
 
 const confirm = useConfirm();
 const toast = useToast();
 
 const selectedValue = ref('');
 const langSelected = ref(false);
+const selectedModel = ref('');
+const modelSelected = ref(false);
+const modelArr = ref([]);
 
-const emit = defineEmits(['language-selected']);
+const emit = defineEmits(['language-selected', 'model-selected']);
 
 function selected() {
     langSelected.value = true;
     console.log("language selected: " + selectedValue.value);
 }
 
+function modelSel() {
+    modelSelected.value = true;
+    modelArr.value = selectedModel.value.map(model => model.code);
+    console.log("models selected: " + JSON.stringify(modelArr.value));
+}
+
 function checkLang() {
-    if (selectedValue.value === '') {
+    if (selectedValue.value === '' || selectedModel.value.length == 0) {
         confirm.require({
             group: 'templating',
             header: '未选择语言',
             message: '请选择一种语言',
-            // icon: 'pi pi-exclamation-circle',
             rejectProps: {
                 label: '取消',
-                // icon: 'pi pi-times',
                 outlined: true,
                 size: 'small'
             },
             acceptProps: {
                 label: 'OK',
-                // icon: 'pi pi-check',
                 size: 'small'
             }
         });
     } else {
         emit('language-selected', selectedValue.value);
+        emit('model-selected', modelArr.value);
     }
 }
-
 
 const computedColor = computed(() => {
     return langSelected.value ? '#000000' : '#999999';
@@ -61,131 +65,115 @@ const props = defineProps({
     langSelections: {
         type: Array,
         required: true,
+    },
+    modelSelections: {
+        type: Array,
+        required: true,
     }
 });
 </script>
 
-
 <template>
     <ConfirmDialog group="templating" class="confirmPopup">
-    <template #message="slotProps" class="confirmCustom">
-        <div class="flex flex-col items-center w-full gap-3 border-b border-surface-200 dark:border-surface-700">
-            <i :class="slotProps.message.icon" class="text-6xl text-primary"></i>
-            <p>{{ slotProps.message.message }}</p>
-        </div>
-    </template>
+        <template #message="slotProps" class="confirmCustom">
+            <div class="flex flex-col items-center w-full gap-3 border-b border-surface-200 dark:border-surface-700">
+                <i :class="slotProps.message.icon" class="text-6xl text-primary"></i>
+                <p>{{ slotProps.message.message }}</p>
+            </div>
+        </template>
     </ConfirmDialog>
     <div class="langSect">
+        <MultiSelect v-model="selectedModel" :options="modelSelections" @change="modelSel" optionLabel="name" filter placeholder="Select Models" display="chip" class="w-full md:w-80">
+            <template #option="slotProps">
+                <div class="flex items-center modelHover" v-tooltip.top="slotProps.option.desc">
+                    <div>{{ slotProps.option.name }}</div>
+                </div>
+            </template>
+        </MultiSelect>
         <div class="langMenu">
-            <select id="lang" name="lang" v-model="selectedValue" @change="selected" v-bind:style="{ color: computedColor }">
+            <select id="lang" name="lang" v-model="selectedValue" @change="selected" :style="{ color: computedColor }">
                 <option value="" disabled selected class="placeholder">选择翻译语言</option>
-                <option v-for="lang in langSelections" :value="lang">{{ lang  }}</option>
-                <!-- <option value="英语">英语</option>
-                <option value="西班牙语">西班牙语</option> -->
+                <option v-for="lang in langSelections" :value="lang">{{ lang }}</option>
             </select>
             <i class="iconfont icon-down"></i>
         </div>
-        <!-- <button class="button">
-            选择翻译语言
-        </button> -->
         <a :href="nextLink" @click.prevent="checkLang">
             <ButtonGrad :htmlContent="btnText" className="btnTrans"/>
-        </a>        
+        </a>
     </div>
 </template>
 
 <style scoped>
-    .langSect{
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        padding: 1rem;
-    }
-    select{
-        height: 2.6rem;
-        width: 10rem;
-        font-size: 1rem;
-        border: none;
-        padding: 0rem 1rem;
-        appearance: none;
-        border-radius: 10px;
-        overflow: hidden;
-        cursor: pointer;
-        color: #999999;
-    }
-    .langMenu{
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-    
-    .icon-down{
-        position: absolute;
-        right: 1rem;
-        pointer-events: none;
-    }
- 
-    /* .button{
-        background-color: #3385ff;
-        background-image: linear-gradient(90deg, #006eff, #13adff);
-        box-shadow: 0 5px 10px 0 rgba(16, 110, 253, .3);
-        border: none;
-        font-size: 1rem;
-        color: #fff;
-        height: 2.6rem;
-        width: 10rem;
-        text-align: center;
-        border-radius: 10px;
-        cursor: pointer;
-    }
-    .button:hover {
-        box-shadow: 0 0 0.661vw rgba(0, 0, 0, .05);
-        -webkit-transform: translateY(-0.198vw);
-        -ms-transform: translateY(-0.198vw);
-        transform: translateY(-0.198vw);
-    } */
-     .btnTrans {
-        font-size: 1rem;
-        height: 2.6rem;
-        width: 10rem;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-     }
-     a{
-        text-decoration: none;
-     }
-     
-    
+.langSect {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+}
+select {
+    height: 2.6rem;
+    width: 10rem;
+    font-size: 1rem;
+    border: none;
+    padding: 0rem 1rem;
+    appearance: none;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    color: #999999;
+}
+.langMenu {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.icon-down {
+    position: absolute;
+    right: 1rem;
+    pointer-events: none;
+}
+.btnTrans {
+    font-size: 1rem;
+    height: 2.6rem;
+    width: 10rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+a {
+    text-decoration: none;
+}
+.modelHover {
+    width: 100%;
+}
 </style>
 
 <style>
-    .p-dialog{
-        width: 50vw; 
-    }
-    .p-dialog-footer .p-button{
-        background-color: #3385ff;
-        border-color: #3385ff;
-    }
-    .p-dialog-footer .p-button-outlined{
-        border-color: #3385ff;
-        background-color: transparent;
-        color: #3385ff;
-    }
-    .p-dialog-footer .p-button:not(:disabled):hover {
-        background: #0273FF;
-        border: 1px solid #3385ff;
-        color: white;
-    }
-
-    .p-dialog-footer .p-button-outlined:not(:disabled):hover {
-        background: rgba(16, 110, 253, .1);
-        border-color: #3385ff;
-        color: #3385ff;
-    }
-
-    
+.p-dialog {
+    width: 50vw;
+}
+.p-dialog-footer .p-button {
+    background-color: #3385ff;
+    border-color: #3385ff;
+}
+.p-dialog-footer .p-button-outlined {
+    border-color: #3385ff;
+    background-color: transparent;
+    color: #3385ff;
+}
+.p-dialog-footer .p-button:not(:disabled):hover {
+    background: #0273FF;
+    border: 1px solid #3385ff;
+    color: white;
+}
+.p-dialog-footer .p-button-outlined:not(:disabled):hover {
+    background: rgba(16, 110, 253, .1);
+    border-color: #3385ff;
+    color: #3385ff;
+}
+.p-multiselect-label-container {
+    width: 17rem;
+}
 </style>
-  

@@ -7,8 +7,9 @@ import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import Button from 'primevue/button';
 import CodeEditor from '../components/CodeEditor.vue';
+import LoadingSection from '../components/LoadingSection.vue'
 import ProgressSpinner from 'primevue/progressspinner';
-import { GetSetup } from '../utils/apiCalls';
+import { GetModels } from '../utils/apiCalls';
 
 const mimeTypes = {
     'txt': 'text/plain',
@@ -41,7 +42,11 @@ const nodes = ref(fileAttr.nodes);
 const codeStr = ref('');
 const codeLang = ref('');
 const allLang = ref([]);
+const allModels = ref([]);
+
 const transArr = ref([]);
+const modelArr = ref([]);
+
 
 const isLoading = ref(true);
 const isSubmitted = ref(false);
@@ -199,10 +204,39 @@ const unHighlight = async (nodes) => {
 }
 
 const gettingSetup = async () => {
-  try {
-    const data = await GetSetup();
-    // console.log(data);
-    allLang.value = data.languageOptions;
+    allLang.value = fileAttr.setupData.languageOptions;
+//   try {
+//     const data = await GetSetup();
+//     // console.log(data);
+//     allLang.value = data.languageOptions;
+//     // console.log(allLang.value);
+//     // console.log(excludeFiles.value);
+//     // console.log(excludeFolders.value);
+//     return data;
+//   } catch (error) {
+//     apiError.value = error.message;
+//     throw error;
+//   }
+}
+
+const gettingModels = async () => {
+    try {
+    const data = await GetModels();
+    // console.log('model'+ JSON.stringify(data));
+    // console.log(data.length+' '+JSON.stringify(data[0]))
+    for(var i=0; i<data.length; i++){
+        const addModel = {
+            name: data[i].displayName,
+            code: data[i].modelName,
+            desc: data[i].description
+        }
+        allModels.value.push(addModel);
+    }
+    // for (var i = 0; i){
+    //     console.log(model);
+    // }
+    
+    // allModels.value = data;
     // console.log(allLang.value);
     // console.log(excludeFiles.value);
     // console.log(excludeFolders.value);
@@ -214,9 +248,10 @@ const gettingSetup = async () => {
 }
 
 onMounted(async () => {
-  
   await gettingSetup();
+  await gettingModels();
   isLoading.value = false;
+
   
 });
 
@@ -274,38 +309,6 @@ const TranslatableArr = async (nodeList) => {
     }
 }
 
-
-// const SubmitSelected = async (fileArr, tarLang, userId) => {
-//     for (const [key, value] of Object.entries(fileArr)) {
-//         if(value.translate){
-//             console.log(userId + " " + value.fileId + " " + tarLang + " " + value.path);
-//             // console.log("file content is "+value.content);
-//             await SubmitSolo(value.content, tarLang, value.fileId, value.path, userId);
-//             // try {
-//             //     //do i have to keep polling send file?
-//             //     const data = await SendFile(value.content, tarLang, value.fileId, value.path, userId);
-//             //     console.log(data)
-//             //     return data;
-//             // } catch (error) {
-//             //     apiError.value = error.message;
-//             //     throw error;
-//             // }
-//         }
-//     }
-// }
-
-// const SubmitSolo = async (file, tarLang, fileId, filePath, userId) => {
-//     try {
-//         //do i have to keep polling send file?
-//         const data = await SendFile(file, tarLang, fileId, filePath, userId);
-//         console.log(data)
-//         return data;
-//     } catch (error) {
-//         apiError.value = error.message;
-//         throw error;
-//     }
-// }
-
 const nextLinkRef = ref(null);
 
 
@@ -325,7 +328,7 @@ const submitLanguage = (lang) => {
     
     fileAttr.nodes = nodes.value;
     fileAttr.fileAft = transArr.value
-    console.log(fileAttr.fileAft);
+    // console.log('submitLanguage()' + fileAttr.fileAft);
     //submit all the selected files below
     //code here
     
@@ -340,6 +343,24 @@ const submitLanguage = (lang) => {
     // }
     
 };
+
+const assignModels = (nodeList, modelNames) => {
+    for (const value of nodeList) {
+        if(value.selectable && value.translate){
+            console.log(JSON.stringify(value));
+            value.models = modelNames;
+        }
+    }
+}
+
+const submitModel = (model) => {
+    console.log("this model "+ model );
+
+    // console.log('trans array: '+ JSON.stringify(transArr.value));
+    // assignModels(transArr.value, model);
+    
+    fileAttr.selectedModel = model;
+}
 
 
 
@@ -364,17 +385,7 @@ const onNodeSelect = (node) => {
 
 <template>
     <div class="muted-sect">
-        <div v-if="isLoading" class="loading">
-            <div class="loadingScreen">
-                <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
-                <h1 class="loadingTitle">
-                    正在访问网页...
-                </h1>
-                <h3 class="notice">
-                    您访问的网页快要好了...
-                </h3>
-            </div>
-        </div>
+        <LoadingSection v-if="isLoading" />
         <div v-else class="loaded">
             <div class="reviewCode">
                 <div class="directorySect">
@@ -391,7 +402,7 @@ const onNodeSelect = (node) => {
                     <CodeEditor :codeDoc="codeStr" :language="codeLang" :isEditable="isEditable" @update:codeDoc="handleCodeUpdate" @key-event="handleKeyEvent"/>
                 </div>
             </div>
-            <SelectLang nextLink="#/translating" @language-selected="submitLanguage" :langSelections="allLang"/>
+            <SelectLang nextLink="#/translating" @language-selected="submitLanguage" @model-selected="submitModel" :langSelections="allLang" :modelSelections="allModels"/>
             <a ref="nextLinkRef" href="#/translating" style="display: none;"></a>
         </div>
     </div>
@@ -474,12 +485,12 @@ const onNodeSelect = (node) => {
     padding: 2rem;
     border-radius: 10px;
 }
-.loadingScreen{
+/* .loadingScreen{
     display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
     gap: 1rem;
     padding: 3rem;
-}
+} */
 </style>

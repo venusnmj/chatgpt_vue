@@ -137,7 +137,7 @@ watch(() => props.isEditable, (newEditable) => {
 </template>
 
 <style scoped>
-.cm-editor {
+/* .cm-editor {
   height: 400px;
-}
+} */
 </style>

@@ -1,6 +1,8 @@
 export const GetSetup = async () => {
     try {
-      const response = await fetch('http://192.168.31.239:8080/public/website-info');
+      const response = await fetch('http://172.20.10.7:8080/public/website-info');
+    // const response = await fetch('/api/public/website-info');
+
   
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -29,12 +31,21 @@ export const GetSetup = async () => {
         totalFilesTranslated: 0
       };
     }
+    // return {
+    //    excludedDirectories: ["/dir1", "/dir2"],
+    //    excludedFileTypes: [".jpg", ".png"],
+    //    logoUrl: "http://example.com/logo.png",
+    //    websiteName: "Example Website",
+    //    languageOptions: ["en", "es", "fr"],
+    //    totalUser: 1234,
+    //    totalFilesTranslated: 5678
+    // };
   };
   
   
   export const GetUserIp = async () => {
   try {
-    const response = await fetch('http://192.168.31.239:8080/public/get-ip', {
+    const response = await fetch('http://172.20.10.7:8080/public/get-ip', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -52,48 +63,11 @@ export const GetSetup = async () => {
     console.error('Error fetching IP address:', error);
     throw error;
   }
+// return ({    
+//     ipAddress: "192.168.1.1"
+// });
 };
 
-
-// export const PutUserId = async ( userId ) => {
-//     return userId;
-// }
-
-// export const PutUserId = async (uid, ipAddress) => {
-//     try {
-//       const response = await fetch(`http://192.168.31.239:8080/public/${uid}/create`, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.parse(`{ "ipAddress" : ${ipAddress} }`) // Send the request body with ipAddress
-//       });
-  
-//       if (response.ok) {
-//         // Success response
-//         const data = await response.json();
-//         console.log('User created successfully:', data.uid); // Log the user ID for debugging
-//         return { success: true, uid: data.uid };
-//       } else if (response.status === 400) {
-//         // UID taken
-//         const data = await response.json();
-//         console.error('Error creating user:', data.error);
-//         return { success: false, error: 'UID taken' };
-//       } else if (response.status === 500) {
-//         // Internal server error
-//         const data = await response.json();
-//         console.error('Database operation error:', data.error);
-//         return { success: false, error: data.error || 'An unexpected error occurred.' };
-//       } else {
-//         // Handle other status codes if necessary
-//         console.error('Unexpected response status:', response.status);
-//         return { success: false, error: 'An unexpected error occurred.' };
-//       }
-//     } catch (error) {
-//       console.error('Error making API request:', error);
-//       return { success: false, error: 'An unexpected error occurred.' };
-//     }
-//   };
 
 export const PutUserId = async (uid, ipAddress) => {
     console.log("uid: " + uid);
@@ -103,7 +77,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
         console.log("Form Data: " + formData.get("ipAddress"));
 
-        const response = await fetch(`http://192.168.31.239:8080/public/${uid}/create`, {
+        const response = await fetch(`http://172.20.10.7:8080/public/${uid}/create`, {
             method: 'POST',
             body: formData
         });
@@ -134,7 +108,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
 export const AuthenticateUser = async (uid) => {
     try {
-        const response = await fetch('http://192.168.31.239:8080/authenticate/user', {
+        const response = await fetch('http://172.20.10.7:8080/authenticate/user', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -153,13 +127,17 @@ export const AuthenticateUser = async (uid) => {
         console.error('Error authenticating user:', error);
         return { success: false, error: 'An unexpected error occurred.' }; // Return an error message if the request fails
     }
+    // return (
+    //     { success: true, 
+    //         jwt: "eyJhbGciOiJIUzI1NiJ9..." }
+    //   );
+    
 };
 
 
 export const GetHistory = async ( uid, jwt) => {
     try {
-        // console.log('history of '+ jwt)
-        const response = await fetch(`http://192.168.31.239:8080/user/files/${uid}/file-names`, {
+        const response = await fetch(`http://172.20.10.7:8080/user/files/${uid}/file-names`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
@@ -177,20 +155,31 @@ export const GetHistory = async ( uid, jwt) => {
         console.error('Error getting history:', error);
         return { success: false, error: 'An unexpected error occurred.' }; // Return an error message if the request fails
     }
+    // return ([    
+    //     {
+    //         "fileId": "fileId1",
+    //         "filePath": "file/path/1.txt"
+    //     },
+    //     {
+    //         "fileId": "fileId2",
+    //         "filePath": "file/path/2.txt"
+    //     }
+    // ]);
+    
 };
 
 
 //userFiles consist of userId and filesList
 export const GetTranslatable = async (uid, userFiles, jwt) => {
-    console.log(userFiles); // Make sure this logs the correct array of strings
+    console.log(userFiles); 
     try {
-        const response = await fetch(`http://192.168.31.239:8080/user/files/${uid}/upload`, {
+        const response = await fetch(`http://172.20.10.7:8080/user/files/${uid}/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
-                'Content-Type': 'application/json', // Set the Content-Type header to application/json
+                'Content-Type': 'application/json', 
             },
-            body: JSON.stringify(userFiles), // Stringify the array of strings
+            body: JSON.stringify(userFiles), 
         });
 
         if (!response.ok) {
@@ -224,18 +213,34 @@ export const GetTranslatable = async (uid, userFiles, jwt) => {
 }
 
 
+// This funciton must have better error handling 
 
-export const SendFile = async (uid, filesData, jwtToken) => {
-    const url = `http://192.168.31.239:8080/user/translate/${uid}/upload`;
+// the response status code doesnt tell you anything meaningful,
+// the structure of the response is a array of json object with  { id, modelName status, status code} 
+// the status code of each individual files tell us whether that id +/ modelName is taken / rate limited / internal sever error 
+export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNames) => {
+    const url = `http://172.20.10.7:8080/user/translate/${uid}/upload`;
     const formData = new FormData();
 
-    // Append each file and its metadata to the FormData object
     filesData.forEach(fileData => {
-        formData.append('files', fileData.file, fileData.filePath); // 'file' part
+        console.log('im here');
+        formData.append('files', fileData.file); // 'file' part
         formData.append('ids', fileData.id); // 'id' part
-        formData.append('targetLanguages', fileData.targetLanguage); // 'targetLanguage' part
         formData.append('filePaths', fileData.filePath); // 'filePath' part
     });
+
+    for (var pair of formData.entries()) {
+        console.log('sendFiles ' + pair[0] + ': ' + pair[1]); 
+    }
+
+
+    formData.append('modelName', modelNames);
+
+    formData.append('targetLanguage', targetLanguage); // Correct parameter name
+
+    for (var pair of formData.entries()) {
+        console.log('sendFiles ' + pair[0] + ': ' + pair[1]); 
+    }
 
     try {
         const response = await fetch(url, {
@@ -261,18 +266,10 @@ export const SendFile = async (uid, filesData, jwtToken) => {
 };
 
 
-// export const SendFile = async ( file, lang, fileId, filePath, userId) => {
-//     return(
-//         {
-//             "fileId": fileId,
-//             "status": "submitted"
-//         }
-//     );
-// }
 
-export const PollingFile = async (uid, fileId, jwtToken) => {
-    const url = `http://192.168.31.239:8080/user/translate/${uid}/status`;
-    const params = new URLSearchParams({ id: fileId });
+export const PollingFile = async (uid, fileId, jwtToken, modelName) => {
+    const url = `http://172.20.10.7:8080/user/translate/${uid}/status`;
+    const params = new URLSearchParams({ id: fileId, modelName: modelName });
 
     try {
         const response = await fetch(`${url}?${params}`, {
@@ -289,7 +286,10 @@ export const PollingFile = async (uid, fileId, jwtToken) => {
             } else if (response.status === 404) {
                 const errorData = await response.json();
                 throw new Error(errorData.status || 'ID not found');
-            } else {
+            } else if (response.status === 500){
+                throw new Error('Internal server error');
+            }
+            else {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
         }
@@ -301,20 +301,16 @@ export const PollingFile = async (uid, fileId, jwtToken) => {
         console.error('Error updating file status:', error.message);
         return { success: false, error: error.message };
     }
+    // return(
+    //     {
+    //         "fileId": "file1",
+    //         // "status": "processing",
+    //         "status": "completed"
+            
+    //     }
+    // );
 };
 
-
-
-// export const PollingFile = async (fileId) => {
-//     return(
-//         {
-//             "fileId": "file1",
-//             // "status": "processing",
-//             "status": "completed"
-            
-//         }
-//     );
-// } 
 
 export const RetryFile = async (fileId, file, lang, filePath) => {
     //fileId for 500
@@ -327,9 +323,9 @@ export const RetryFile = async (fileId, file, lang, filePath) => {
     );
 }
 
-export const GetTranslation = async (uid, fileId, jwtToken) => {
-    const url = `http://192.168.31.239:8080/user/translate/${uid}/content`;
-    const params = new URLSearchParams({ id: fileId });
+export const GetTranslation = async (uid, fileId, jwtToken, modelName) => {
+    const url = `http://172.20.10.7:8080/user/translate/${uid}/content`;
+    const params = new URLSearchParams({ id: fileId, modelName: modelName });
 
     try {
         const response = await fetch(`${url}?${params}`, {
@@ -359,13 +355,26 @@ export const GetTranslation = async (uid, fileId, jwtToken) => {
         console.error('Error fetching translated content:', error.message);
         return { success: false, error: error.message };
     }
+    // return(
+    //     {
+    //         "fileContent": "translated code here"
+    //     }
+    // )
 };
 
+export const GetModels = async () => {
+    try {
+        const response = await fetch('http://172.20.10.7:8080/public/website-info/ai-list');
+    
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        // console.log('models: '+ JSON.stringify(data));
+        return data;
+      } catch (error) {
+        console.error('Error fetching model data:', error);
+        throw error;
+      }
+}
 
-// export const GetTranslation = async (fileId) => {
-//     return(
-//         {
-//             "fileContent": "translated code here"
-//         }
-//     )
-// }

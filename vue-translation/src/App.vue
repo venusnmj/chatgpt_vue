@@ -7,10 +7,14 @@ import Review from './views/Review.vue'
 import Translating from './views/Translating.vue'
 import CodeCheck from './views/CodeCheck.vue'
 import NotFound from './views/NotFound.vue'
-import NotAvailable from './views/NotAvailable.vue';
+import NotAvailable from './components/NotAvailable.vue';
 import { GetSetup } from './utils/apiCalls';
+import { fileAttr } from './shared/fileAttr.js';
 
+
+import LoadingScreen from './components/LoadingScreen.vue';
 import ProgressSpinner from 'primevue/progressspinner';
+
 
 import { ref, computed, onMounted, watch } from 'vue'
 // import Home from './Home.vue'
@@ -18,6 +22,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 
 const showSteps = ref(true);
 const isLoading = ref(true);
+const toRetry = ref(false);
 
 const fileCnt = ref(0);
 const userCnt = ref(0);
@@ -25,6 +30,7 @@ const appName = ref('');
 const appLogo = ref('');
 const excludeFiles = ref([]);
 const excludeFolders = ref([]);
+const setupInfo = ref();
 
 const apiError = ref(null);
 
@@ -32,7 +38,11 @@ const apiError = ref(null);
 const gettingSetup = async () => {
   try {
     const data = await GetSetup();
-    // console.log("setupTitle: ", data);
+    // console.log("setupInfo: ", data);
+    // setupInfo.value = data;
+    fileAttr.setupData = data;
+    console.log("setupData: ", data);
+
     fileCnt.value = data.totalFilesTranslated;
     userCnt.value = data.totalUser;
     appName.value = data.websiteName;
@@ -43,13 +53,14 @@ const gettingSetup = async () => {
   } catch (error) {
     console.log(error.message);
     apiError.value = error.message;
+    toRetry.value = true;
     throw error;
   }
 }
 
 const testProxy = async () => {
   try {
-    const response = await fetch('http://192.168.31.239:8080/public/website-info');
+    const response = await fetch('http://172.20.10.7:8080/public/website-info');
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -68,7 +79,6 @@ const routes = {
   '/review': Review,
   '/translating': Translating,
   '/codecheck': CodeCheck,
-  '/notavailable': NotAvailable
 }
 
 const currentPath = ref(window.location.hash)
@@ -78,11 +88,17 @@ window.addEventListener('hashchange', () => {
   // console.log("at here now: "+currentPath.value)
 })
 
+const handleError = (value) => {
+  toRetry.value = value;
+}
+
 const currentView = computed(() => {
   const path = currentPath.value.slice(1) || '/';
   const view = routes[path.split('?')[0]]; // Get the path without query parameters
   return view || NotFound;
 });
+
+
 
 // const currentLanguage = computed(() => {
 //   const urlParams = new URLSearchParams(currentPath.value.split('?')[1]);
@@ -104,13 +120,14 @@ onMounted(async () => {
   // testProxy();
   await gettingSetup();
   isLoading.value = false;
-  
+
 });
 
 </script>
 
 <template>
-  <div v-if="isLoading" class="loading">
+  <link rel="stylesheet" href="https://at.alicdn.com/t/c/font_4585610_jtbux2m9he.css">
+  <!-- <div v-if="isLoading" class="loading">
     <div class="loadingScreen">
         <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
         <h1 class="loadingTitle">
@@ -120,26 +137,19 @@ onMounted(async () => {
             您访问的网页快要好了...
         </h3>
     </div>
-  </div>
+  </div> -->
+  <NotAvailable v-if="toRetry"/>
+  <LoadingScreen v-else-if="isLoading"/> 
   <div v-else class="fullPage">
-    <link rel="stylesheet" href="https://at.alicdn.com/t/c/font_4585610_7vp1too427h.css">
     <Header :userCount="userCnt" :fileCount="fileCnt" :appTitle="appName" :logoSrc="appLogo" />
     <Steps v-if="firstPage"/>
     <div class="container">
       <div class="changing-sect">
           <!-- <component :is="currentView" :selectedLanguage="currentLanguage"/> -->
-          <component :is="currentView"/>
+          <component :is="currentView" @errorBool="handleError"/>
       </div>
     </div>
   </div>
-  <!-- <div class="pastHistory" v-if="firstPage">
-    <h3>
-      已翻译的文件
-    </h3>
-    <div class="pastFiles">
-      <Button v-for="history in fileHistory" :label="history.filePath.substring(history.filePath.lastIndexOf('/') + 1)" icon="pi pi-fw pi-download" severity="secondary" text raised/>
-    </div>
-  </div> -->
 
 </template>
 

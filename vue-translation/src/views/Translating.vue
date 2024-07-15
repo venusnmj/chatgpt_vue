@@ -10,9 +10,8 @@ import Button from 'primevue/button';
 import ButtonGrad from '../components/ButtonGrad.vue'
 import { SendFile, PollingFile, RetryFile, GetTranslation } from '../utils/apiCalls';
 
-
 const apiError = ref(null);
-
+const fileError = ref(false);
 const selectedKey = ref(null);
 const dropdownVisiblePre = ref(false);
 const dropdownVisiblePost = ref(false);
@@ -21,7 +20,7 @@ const fileCode = ref(fileAttr.fileBef);
 const transArr = ref(fileAttr.fileAft);
 const userID = ref(fileAttr.userId);
 const selectLang = ref(fileAttr.selectedLanguage);
-// var oldnodes = fileAttr.nodes;
+const selectModel = ref(fileAttr.selectedModel);
 const nodes = ref(fileAttr.nodes);
 const storeJwt = ref(fileAttr.userJwt);
 
@@ -29,57 +28,21 @@ const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
 const loadVal = ref(0);
 const buttonText = ref(`继续`);
-
 const pgLoading = ref(true);
 const errorBool = ref(false);
 const completedBool = ref(false);
-
 const allProcess = ref(0);
 const doneProcess = ref(0);
-
 const nextLinkRef = ref(null);
-
+const restartLink = ref(null);
 const sentArr = ref([]);
 
-
-
-// const isTranslating = ref(false);
-// const needRetry = ref(false);
-// const isDone = ref(false);
-
-
+// Computed property for progress string
 const loadString = computed(() => {
-    return `${doneProcess.value}/${allProcess.value} 已翻译`
-})
-
-
-
-
-const toggleDropdownPre = () => {
-    dropdownVisiblePre.value = !dropdownVisiblePre.value;
-};
-
-const toggleDropdownPost = () => {
-    dropdownVisiblePost.value = !dropdownVisiblePost.value;
-};
-
-const handleNodeSelectPre = (event) => {
-    console.log("pre"+JSON.stringify(selectedKey));
-    console.log(event.node)
-    dropdownVisiblePre.value = false;
-};
-
-const handleNodeSelectPost = (event) => {
-    console.log("post"+JSON.stringify(selectedKey));
-    console.log(event.node)
-    dropdownVisiblePost.value = false;
-};
-
-const selectedKeyLabel = computed(() => {
-
-  return selectedFile.value ? selectedFile.value : '选择文件';
+    return `${doneProcess.value}/${allProcess.value} 已翻译`;
 });
 
+// Function to collect keys for expanding all nodes
 const collectKeys = async (nodes, keys = {}) => {
   nodes.forEach(node => {
     keys[node.key] = true;
@@ -90,90 +53,83 @@ const collectKeys = async (nodes, keys = {}) => {
   return keys;
 };
 
+// Function to add completed class to nodes
 const addCompleted = (fileArr, nodes) => {
     for (const [key, value] of Object.entries(fileArr)) {
-        if(value.completed){
-            console.log("done is "+value.key);
+        if (value.completed) {
             doneClass(nodes, value.key);
         }
     }
     return nodes;
 };
 
+// Function to add done class to nodes
 const doneClass = (nodes, keyVal) => {
     nodes.forEach(node => {
-        if(node.key == keyVal){
+        if (node.key === keyVal) {
             node.styleClass = "completedColor";
-            node.icon = "pi pi-fw pi-check-circle"
+            node.icon = "pi pi-fw pi-check-circle";
         }
         if (node.children) {
             doneClass(node.children, keyVal);
         }
-    })
-    console.log(nodes);
+    });
 }
 
+// Delay function
 const delay = (time) => {
-  return new Promise(res => {
-    setTimeout(res,time)
-  });
+  return new Promise(res => setTimeout(res, time));
 }
 
-// const GetTranslated = async (userId, fileId, userJwt) => {
-//     try {
-//         const data = await GetTranslation(userId, fileId, userJwt);
-//         console.log(data.content)
-//         return data.content;
-//     } catch (error) {
-//         apiError.value = error.message;
-//         throw error;
-//     }
-// }
-
+// Polling function to check file status
 const PollingFiles = async (fileArr, total, userId, userJwt) => {
     let done = 0;
     let state = '';
-    // let allProcess = 0;
+    console.log("check models "+ JSON.stringify(selectModel.value));
     for (const [key, value] of Object.entries(fileArr)) {
-        if(value.translate){
-            state = await HandlePolling(userId , value.fileId, userJwt);
-            while(state == 'processing'){
-                console.log("to translate "+value.key + " " + value.path);
-                await delay(300);
-                state = await HandlePolling(userId, value.fileId, userJwt);
-            }
-            if(state == 'completed'){
-                done++;
-                value.completed = true;
-                loadVal.value = Math.floor((done/total)*100);
-                doneProcess.value = done;
-                console.log("old completed status true:" + value.key + Object.values(fileAttr.fileBef));
-                // value.code = await GetTranslated(userId, value.fileId, userJwt)
+        if (value.translate) {
+            for(var i=0; i<selectModel.value.length; i++){
+                console.log('model name passed '+selectModel.value[i]);
+                state = await HandlePolling(userId, value.fileId, userJwt, selectModel.value[i]);
+                while (state === 'processing') {
+                    await delay(1000);
+                    state = await HandlePolling(userId, value.fileId, userJwt, selectModel.value[i]);
+                }
+                if (state === 'completed') {
+                    done++;
+                    value.completed = true;
+                    loadVal.value = Math.floor((done / total) * 100);
+                    doneProcess.value = done;
+                }
+                else{
+                    console.log('errorBool should change');
+                }
             }
             
         }
     }
-    
-    console.log(done + "/" + total);
-    console.log(Math.floor((done/total)*100));
-    loadVal.value = Math.floor((done/total)*100);
+    loadVal.value = Math.floor((done / total) * 100);
     return done;
-
-    
 }
 
+// Check if all files are completed
 const completedLoad = async (done, total) => {
-    if(done == total){
+    if (done === total) {
         loadVal.value = 100;
-        delay(300);
+        await delay(300);
         completedBool.value = true;
     }
 }
 
-const HandlePolling = async (userId, fileId, userJwt) => {
+// Polling handler to check status
+const HandlePolling = async (userId, fileId, userJwt, modelName) => {
     try {
-        const data = await PollingFile(userId, fileId, userJwt);
-        console.log(data.status)
+        const data = await PollingFile(userId, fileId, userJwt, modelName);
+        if (data.error === 'Internal server error') {
+            errorBool.value = true;
+        } else if (data.error === 'ID not found') {
+            currentPath.value = '#/';
+        }
         return data.status;
     } catch (error) {
         apiError.value = error.message;
@@ -181,45 +137,17 @@ const HandlePolling = async (userId, fileId, userJwt) => {
     }
 }
 
-onMounted(async () => {
-    sentArr.value = [];
-    console.log("start of translating "+ JSON.stringify(fileAttr.fileBef));
-    expandedKeys.value = await collectKeys(nodes.value);
-    selectedFile.value = findLabelByKey(nodes.value, 0);
-
-    allProcess.value = await SubmitSelected(transArr.value, selectLang.value, userID.value, storeJwt.value);
-    console.log("all submitted processes "+allProcess.value)
-    pgLoading.value = false;
-
-    console.log("before polling: "+ JSON.stringify(fileAttr.fileBef));
-    //PollingFiles writes on new array
-    doneProcess.value = await PollingFiles(transArr.value, allProcess.value, userID.value, storeJwt.value);
-    await completedLoad(doneProcess.value, allProcess.value);
-    console.log("after polling: "+ JSON.stringify(fileAttr.fileBef));
-    console.log("array after: "+ JSON.stringify(transArr.value));
-    addCompleted(transArr.value, nodes.value);
-    console.log("end of mounting: "+ JSON.stringify(fileAttr.fileBef));
-})
-
-// onMounted(() => {
-//     sentArr.value = [];
-//     console.log("start of translating "+ JSON.stringify(fileAttr.fileBef));
-//     expandedKeys.value = collectKeys(nodes.value);
-//     selectedFile.value = findLabelByKey(nodes.value, 0);
-//     // expandedKeys.value = collectKeys(fileAttr.nodes);
-//     // selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
-// });
-
+// Function to find node by key
 const findNodeByKey = (nodeList, searchKey) => {
     for (const [key, value] of Object.entries(nodeList)) {
         if (value.key === searchKey && value.name) {
-          // console.log("filename: "+value.name);
-            // console.log("found: " + value.key + " " + value.name);
             return [value.key, value];
         }
     }
     return null;
 };
+
+// Function to find label by key
 const findLabelByKey = (nodes, searchKey) => {
   for (const node of nodes) {
     if (node.key === searchKey) {
@@ -235,38 +163,39 @@ const findLabelByKey = (nodes, searchKey) => {
   return null;
 };
 
+// Prepare next step
 const prepNext = async () => {
-    // fileAttr.fileAft = transArr.value;
-    console.log("check prior content: "+ JSON.stringify(fileAttr.fileBef));
-    console.log("check translated content: "+ JSON.stringify(fileAttr.fileAft));
     nextLinkRef.value.click();
 }
 
-const SubmitSelected = async (fileArr, tarLang, userId, userJwt) => {
+// Submit selected files for translation
+const SubmitSelected = async (fileArr, tarLang, userId, userJwt, modelNames) => {
     let sentArr = [];
+    console.log("before submitfiles filearr " + fileArr.value);
     for (const [key, value] of Object.entries(fileArr)) {
-        if(value.translate){
-            console.log(userId + " " + value.fileId + " " + tarLang + " " + value.path);
-            console.log("file content is " + value.content);
-
+        if (value.translate) {
             const newSent = {
                 id: value.fileId,
                 file: new Blob([value.content]), // Example Blob
-                targetLanguage: tarLang,
                 filePath: value.path
             };
             sentArr.push(newSent);
         }
     }
-    console.log("filesData", sentArr);
-    await SubmitFiles(userId, sentArr, userJwt);
+    console.log("before submitfiles " + sentArr.value);
+    await SubmitFiles(userId, sentArr, userJwt, tarLang, modelNames);
     return sentArr.length;
 };
 
-const SubmitFiles = async (userId, filesData, jwt) => {
+// Submit files
+const SubmitFiles = async (userId, filesData, jwt, tarLang, modelNames) => {
     try {
-        const data = await SendFile(userId, filesData, jwt);
-        console.log(data);
+        console.log("beforecallingapi "+filesData.value);
+        filesData.forEach(fileData => {
+            console.log('i need help');
+            
+        });
+        const data = await SendFile(userId, filesData, jwt, tarLang, modelNames);
         return data;
     } catch (error) {
         console.error('API Error:', error.message);
@@ -274,28 +203,42 @@ const SubmitFiles = async (userId, filesData, jwt) => {
     }
 };
 
-watch(selectedKey, (newVal, oldVal) => {
-    console.log(Object.keys(newVal));
+const retryTranslation = async () => {
+
+    await RetryFile (fileId, file, lang, filePath);
+}
+
+// Watch selected key
+watch(selectedKey, (newVal) => {
     const key = Object.keys(newVal)[0];
     const node = findNodeByKey(fileCode.value, key);
-    // console.log("node is "+ node[1].name);
-    if(node !== null){
+    if (node !== null) {
         selectedFile.value = node[1].name;
         fileType.value = "pi pi-fw pi-file";
-    }
-    else{
-        // selectedFile.value = findLabelByKey(fileAttr.nodes, key);
+    } else {
         selectedFile.value = findLabelByKey(nodes.value, key);
-        console.log(selectedFile.value);
         fileType.value = 'pi pi-fw pi-folder';
     }
-    
-})
+});
 
+// On mounted lifecycle hook
+onMounted(async () => {
+    sentArr.value = [];
+    expandedKeys.value = await collectKeys(nodes.value);
+    selectedFile.value = findLabelByKey(nodes.value, 0);
+
+    allProcess.value = await SubmitSelected(transArr.value, selectLang.value, userID.value, storeJwt.value, selectModel.value);
+    pgLoading.value = false;
+
+    doneProcess.value = await PollingFiles(transArr.value, allProcess.value, userID.value, storeJwt.value);
+    await completedLoad(doneProcess.value, allProcess.value);
+    addCompleted(transArr.value, nodes.value);
+});
 </script>
 
 <template>
     <div class="muted-sect">
+        <a href="#/" ref="restartLink" style="display: none;"></a>
         <div v-if="pgLoading" class="loading">
             <div class="loadingScreen">
                 <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
@@ -312,17 +255,17 @@ watch(selectedKey, (newVal, oldVal) => {
                 <div class="pre-Ctrl">
                     <div class="dropdown-container">
                         <div class="dropdown-toggle" @click="toggleDropdownPre">
-                        <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
-                        <i class="pi pi-chevron-down"></i>
+                            <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
+                            <i class="pi pi-chevron-down"></i>
                         </div>
                         <div v-if="dropdownVisiblePre" class="dropdown-content">
-                        <Tree
-                            v-model:selectionKeys="selectedKey"
-                            v-model:expandedKeys="expandedKeys"
-                            :value="fileAttr.nodes"
-                            selectionMode="single"
-                            @node-select="handleNodeSelectPre"
-                        />
+                            <Tree
+                                v-model:selectionKeys="selectedKey"
+                                v-model:expandedKeys="expandedKeys"
+                                :value="fileAttr.nodes"
+                                selectionMode="single"
+                                @node-select="handleNodeSelectPre"
+                            />
                         </div>
                     </div>
                 </div>
@@ -332,34 +275,33 @@ watch(selectedKey, (newVal, oldVal) => {
                 <div class="post-Ctrl">
                     <div class="dropdown-container">
                         <div class="dropdown-toggle" @click="toggleDropdownPost">
-                        <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
-                        <i class="pi pi-chevron-down"></i>
+                            <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
+                            <i class="pi pi-chevron-down"></i>
                         </div>
                         <div v-if="dropdownVisiblePost" class="dropdown-content">
-                        <Tree
-                            v-model:selectionKeys="selectedKey"
-                            v-model:expandedKeys="expandedKeys"
-                            :value="fileAttr.nodes"
-                            selectionMode="single"
-                            @node-select="handleNodeSelectPost"
-                        />
+                            <Tree
+                                v-model:selectionKeys="selectedKey"
+                                v-model:expandedKeys="expandedKeys"
+                                :value="fileAttr.nodes"
+                                selectionMode="single"
+                                @node-select="handleNodeSelectPost"
+                            />
                         </div>
                     </div>
                 </div>
-            
             </div>
             <div class="returnStatus">
                 <div v-if="errorBool" class="error">
                     <i class="pi pi-times-circle" />
                     <h1 class="loadingTitle">
-                        10/12 文档已翻译
+                        {{`${doneProcess}/${allProcess}`}} 文档已翻译
                     </h1>
                     <h3 class="notice done">
-                        翻译已完成
+                        翻译出现问题
                     </h3>
                     <div class="errorActions">
                         <Button label="用原版" severity="secondary" outlined />
-                        <Button type="button" label="重试文档" severity="danger" badge="2"/>
+                        <Button type="button" label="重试文档" severity="danger" :badge="allProcess-doneProcess" @click="retryTranslation"/>
                     </div>
                 </div>
                 <div v-else-if="completedBool" class="success">
@@ -371,7 +313,7 @@ watch(selectedKey, (newVal, oldVal) => {
                         翻译已完成
                     </h3>
                     <div class="doneActions">
-                        <a href="#/codecheck" ref="nextLinkRef"  style="display: none;"></a>
+                        <a href="#/codecheck" ref="nextLinkRef" style="display: none;"></a>
                         <a @click.prevent="prepNext">
                             <ButtonGrad className="btnTrans" :htmlContent="buttonText" />
                         </a>
@@ -497,21 +439,10 @@ a {
     padding: 2rem;
     border-radius: 10px;
 }
-.loadingScreen{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    gap: 1rem;
-    padding: 3rem;
-}
-
 </style>
 <style>
 .p-progressspinner-spin .p-progressspinner-circle{
     stroke: #006eff;
     animation: p-progressspinner-dash 1.5s ease-in-out infinite;
 }
-
-
 </style>

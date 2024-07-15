@@ -11,13 +11,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  // server: {
-  //   proxy: {
-  //     '/public': {
-  //       target: 'http://192.168.31.239:8080',
-  //       changeOrigin: true,
-  //       rewrite: (path) => path.replace(/^\/public/, ''),
-  //     },
-  //   },
-  // },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://192.168.31.239:8080',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api/, '')
+      }
+    }
+  },
 });

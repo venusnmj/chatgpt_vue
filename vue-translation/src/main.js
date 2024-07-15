@@ -10,6 +10,7 @@ import "primeicons/primeicons.css";
 import Aura from '@primevue/themes/aura';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
+import Tooltip from 'primevue/tooltip';
 
 
 const app = createApp(App);
@@ -18,6 +19,9 @@ app.use(PrimeVue, {
         preset: Aura
     }
 });
+
+app.directive('tooltip', Tooltip);
+
 app.use(ConfirmationService);
 app.use(ToastService);
 
