@@ -233,6 +233,11 @@ onMounted(async () => {
     doneProcess.value = await PollingFiles(transArr.value, allProcess.value, userID.value, storeJwt.value);
     await completedLoad(doneProcess.value, allProcess.value);
     addCompleted(transArr.value, nodes.value);
+    
+    if(nodes.value.length == 0){
+        console.log("refresh to home");
+        window.location.href = '#/';
+    }
 });
 </script>
 

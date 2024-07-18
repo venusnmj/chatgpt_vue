@@ -81,21 +81,20 @@ const routes = {
   '/codecheck': CodeCheck,
 }
 
-const currentPath = ref(window.location.hash)
+const currentPath = ref(window.location.hash.slice(1) || '/');
 
 window.addEventListener('hashchange', () => {
-  currentPath.value = window.location.hash
-  // console.log("at here now: "+currentPath.value)
-})
+  currentPath.value = window.location.hash.slice(1) || '/';
+});
 
 const handleError = (value) => {
   toRetry.value = value;
 }
 
 const currentView = computed(() => {
-  const path = currentPath.value.slice(1) || '/';
-  const view = routes[path.split('?')[0]]; // Get the path without query parameters
-  return view || NotFound;
+  const path = currentPath.value.split('?')[0]; // Get the path without query parameters
+  const view = routes[path] || NotFound;
+  return view;
 });
 
 
@@ -106,7 +105,7 @@ const currentView = computed(() => {
 // });
 const firstPage = computed(()=>{
   console.log("at here now: " + currentPath.value);
-  if (currentPath.value == '/' || currentPath.value == '' || currentPath.value == '#/'){
+  if (currentPath.value === '/' || currentPath.value === '') {
     showSteps.value = true;
   }
   else {

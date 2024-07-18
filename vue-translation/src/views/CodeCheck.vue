@@ -22,6 +22,7 @@ const selectedKey = ref(null);
 const dropdownVisiblePre = ref(false);
 const dropdownVisiblePost = ref(false);
 const expandedKeys = ref({});
+const nodes = ref(fileAttr.nodes);
 const fileCode = ref(fileAttr.fileBef);
 const transArr = ref(fileAttr.fileAft);
 const userID = ref(fileAttr.userId);
@@ -156,6 +157,10 @@ onMounted(async () => {
     selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
 
     activeChip.value = disModel.value[0];
+
+    if(nodes.value.length == 0){
+        window.location.href = '#/';
+    }
 
 
 });

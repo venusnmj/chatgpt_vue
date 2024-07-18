@@ -47,6 +47,7 @@ const allModels = ref([]);
 const transArr = ref([]);
 const modelArr = ref([]);
 
+const nextLinkRef = ref(null);
 
 const isLoading = ref(true);
 const isSubmitted = ref(false);
@@ -251,6 +252,11 @@ const gettingModels = async () => {
 onMounted(async () => {
   await gettingSetup();
   await gettingModels();
+  console.log("this must exist "+ JSON.stringify(nodes.value));
+  if(nodes.value.length == 0){
+    console.log("refresh to home");
+    window.location.href = '#/';
+  }
   isLoading.value = false;
 
   
@@ -321,7 +327,6 @@ const TranslatableArr = async (nodeList) => {
     }
 }
 
-const nextLinkRef = ref(null);
 
 
 
