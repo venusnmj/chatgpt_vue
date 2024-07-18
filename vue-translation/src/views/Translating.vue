@@ -227,7 +227,7 @@ onMounted(async () => {
     expandedKeys.value = await collectKeys(nodes.value);
     selectedFile.value = findLabelByKey(nodes.value, 0);
 
-    allProcess.value = await SubmitSelected(transArr.value, selectLang.value, userID.value, storeJwt.value, selectModel.value);
+    allProcess.value = await SubmitSelected(transArr.value, selectLang.value, userID.value, storeJwt.value, selectModel.value)*selectModel.value.length;
     pgLoading.value = false;
 
     doneProcess.value = await PollingFiles(transArr.value, allProcess.value, userID.value, storeJwt.value);

@@ -50,7 +50,7 @@ const codeTypes = {
 const props = defineProps({
   codeDoc: {
     type: String,
-    default: "",
+    default: "请选择文档来展示",
   },
   language: {
     type: String,

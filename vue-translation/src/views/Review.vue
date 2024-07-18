@@ -39,7 +39,7 @@ const selectedKey = ref({});
 const fileCode = ref(fileAttr.fileBef);
 const expandedKeys = ref({});
 const nodes = ref(fileAttr.nodes);
-const codeStr = ref('');
+const codeStr = ref('请选择文档来展示');
 const codeLang = ref('');
 const allLang = ref([]);
 const allModels = ref([]);
@@ -50,6 +50,7 @@ const modelArr = ref([]);
 
 const isLoading = ref(true);
 const isSubmitted = ref(false);
+const hasFileSel = ref(false);
 
 const isEditable = computed(() => codeStr.value !== '');
 
@@ -288,6 +289,17 @@ watch(selectedKey, (newVal, oldVal) => {
             }
         }
     }
+
+    // console.log("check empty "+ JSON.stringify(newVal));
+    console.log("check length "+ Object.keys(newVal).length);
+    if (Object.keys(newVal).length == 0){
+        hasFileSel.value = false;
+    }
+    else{
+        hasFileSel.value = true;
+    }
+    console.log(hasFileSel.value);
+
   }
 });
 
@@ -354,12 +366,16 @@ const assignModels = (nodeList, modelNames) => {
 }
 
 const submitModel = (model) => {
-    console.log("this model "+ model );
+    console.log("this model "+ model[0].name);
 
     // console.log('trans array: '+ JSON.stringify(transArr.value));
     // assignModels(transArr.value, model);
+    for(var i=0; i<model.length; i++){
+        fileAttr.selectedModel.push(model[i].code);
+        fileAttr.displayModel.push(model[i].name);
+    }
     
-    fileAttr.selectedModel = model;
+    
 }
 
 
@@ -372,13 +388,13 @@ const onNodeSelect = (node) => {
 
         codeLang.value = node.fileType;
 
-        if(codeLang.value == "py"){
-            codeLang.value = "python";
-        } else if(codeLang.value == "js"){
-            codeLang.value = "javascript";
-        }
+        // if(codeLang.value == "py"){
+        //     codeLang.value = "python";
+        // } else if(codeLang.value == "js"){
+        //     codeLang.value = "javascript";
+        // }
     } else {
-        codeStr.value = '';
+        codeStr.value = '请选择文档来展示';
     }
 };
 </script>
@@ -402,7 +418,14 @@ const onNodeSelect = (node) => {
                     <CodeEditor :codeDoc="codeStr" :language="codeLang" :isEditable="isEditable" @update:codeDoc="handleCodeUpdate" @key-event="handleKeyEvent"/>
                 </div>
             </div>
-            <SelectLang nextLink="#/translating" @language-selected="submitLanguage" @model-selected="submitModel" :langSelections="allLang" :modelSelections="allModels"/>
+            <SelectLang 
+            nextLink="#/translating" 
+            @language-selected="submitLanguage" 
+            @model-selected="submitModel" 
+            :langSelections="allLang" 
+            :modelSelections="allModels"
+            :fileSelected="hasFileSel"
+            />
             <a ref="nextLinkRef" href="#/translating" style="display: none;"></a>
         </div>
     </div>

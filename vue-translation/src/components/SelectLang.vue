@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import ButtonGrad from './ButtonGrad.vue';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from "primevue/useconfirm";
@@ -15,6 +15,7 @@ const langSelected = ref(false);
 const selectedModel = ref('');
 const modelSelected = ref(false);
 const modelArr = ref([]);
+const fileSelected = ref(true);
 
 const emit = defineEmits(['language-selected', 'model-selected']);
 
@@ -25,12 +26,14 @@ function selected() {
 
 function modelSel() {
     modelSelected.value = true;
-    modelArr.value = selectedModel.value.map(model => model.code);
+    console.log("save .code and .name: "+ JSON.stringify(selectedModel.value));
+    modelArr.value = selectedModel.value.map(model => model);
     console.log("models selected: " + JSON.stringify(modelArr.value));
 }
 
 function checkLang() {
-    if (selectedValue.value === '' || selectedModel.value.length == 0) {
+    console.log(fileSelected.value);
+    if (selectedValue.value === '' ) {
         confirm.require({
             group: 'templating',
             header: '未选择语言',
@@ -45,7 +48,37 @@ function checkLang() {
                 size: 'small'
             }
         });
-    } else {
+    } else if(selectedModel.value.length == 0){
+        confirm.require({
+            group: 'templating',
+            header: '未选择AI模型',
+            message: '请选择至少一种AI模型',
+            rejectProps: {
+                label: '取消',
+                outlined: true,
+                size: 'small'
+            },
+            acceptProps: {
+                label: 'OK',
+                size: 'small'
+            }
+        });
+    } else if(!fileSelected.value){
+        confirm.require({
+            group: 'templating',
+            header: '未选择任何文件',
+            message: '请选择至少一个文件',
+            rejectProps: {
+                label: '取消',
+                outlined: true,
+                size: 'small'
+            },
+            acceptProps: {
+                label: 'OK',
+                size: 'small'
+            }
+        });
+    }else {
         emit('language-selected', selectedValue.value);
         emit('model-selected', modelArr.value);
     }
@@ -69,8 +102,17 @@ const props = defineProps({
     modelSelections: {
         type: Array,
         required: true,
+    },
+    fileSelected: {
+        type: Boolean,
+        required: true,
     }
 });
+
+watch(() => props.fileSelected, (newVal) => {
+    fileSelected.value = newVal;
+});
+
 </script>
 
 <template>
