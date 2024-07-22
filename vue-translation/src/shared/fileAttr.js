@@ -10,4 +10,7 @@ export const fileAttr = reactive({
   userId: null,
   userJwt: '',
   setupData: {},
+  // gotToFinal: null,
+  // gotToStart: null,
+  prevPage: null,
 });

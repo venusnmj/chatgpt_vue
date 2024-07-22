@@ -1,6 +1,6 @@
 export const GetSetup = async () => {
     try {
-      const response = await fetch('http://192.168.31.6:8080/public/website-info');
+      const response = await fetch('http://192.168.31.2:8080/public/website-info');
     // const response = await fetch('/api/public/website-info');
 
   
@@ -45,7 +45,7 @@ export const GetSetup = async () => {
   
   export const GetUserIp = async () => {
   try {
-    const response = await fetch('http://192.168.31.6:8080/public/get-ip', {
+    const response = await fetch('http://192.168.31.2:8080/public/get-ip', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
         console.log("Form Data: " + formData.get("ipAddress"));
 
-        const response = await fetch(`http://192.168.31.6:8080/public/${uid}/create`, {
+        const response = await fetch(`http://192.168.31.2:8080/public/${uid}/create`, {
             method: 'POST',
             body: formData
         });
@@ -108,7 +108,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
 export const AuthenticateUser = async (uid) => {
     try {
-        const response = await fetch('http://192.168.31.6:8080/authenticate/user', {
+        const response = await fetch('http://192.168.31.2:8080/authenticate/user', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export const AuthenticateUser = async (uid) => {
 
 export const GetHistory = async ( uid, jwt) => {
     try {
-        const response = await fetch(`http://192.168.31.6:8080/user/files/${uid}/file-names`, {
+        const response = await fetch(`http://192.168.31.2:8080/user/files/${uid}/file-names`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
@@ -173,7 +173,7 @@ export const GetHistory = async ( uid, jwt) => {
 export const GetTranslatable = async (uid, userFiles, jwt) => {
     console.log(userFiles); 
     try {
-        const response = await fetch(`http://192.168.31.6:8080/user/files/${uid}/upload`, {
+        const response = await fetch(`http://192.168.31.2:8080/user/files/${uid}/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
@@ -218,28 +218,87 @@ export const GetTranslatable = async (uid, userFiles, jwt) => {
 // the response status code doesnt tell you anything meaningful,
 // the structure of the response is a array of json object with  { id, modelName status, status code} 
 // the status code of each individual files tell us whether that id +/ modelName is taken / rate limited / internal sever error 
-export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNames) => {
-    const url = `http://192.168.31.6:8080/user/translate/${uid}/upload`;
+// export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNames, reqArr) => {
+//     console.log('request arr '+ JSON.stringify(reqArr));
+//     const url = `http://192.168.31.2:8080/user/translate/${uid}/upload`;
+//     const formData = new FormData();
+
+//     filesData.forEach(fileData => {
+//         // console.log('im here');
+//         formData.append('files', fileData.file); // 'file' part
+//         formData.append('ids', fileData.id); // 'id' part
+//         formData.append('filePaths', fileData.filePath); // 'filePath' part
+//     });
+
+//     formData.append('modelName', modelNames);
+
+//     formData.append('targetLanguage', targetLanguage); // Correct parameter name
+
+//     if (reqArr) {
+//         for (const [id, instruction] of Object.entries(reqArr)) {
+//             console.log(id + " " + instruction);
+//             formData.append(`specialInstructions[${id}]`, `${instruction}`);
+//         }
+//     }
+
+//     for (var pair of formData.entries()) {
+//         console.log('sendFiles ' + pair[0] + ': ' + pair[1]); 
+//     }
+
+//     try {
+//         const response = await fetch(url, {
+//             method: 'POST',
+//             headers: {
+//                 'Authorization': `Bearer ${jwtToken}`,
+//             },
+//             body: formData
+//         });
+
+//         if (!response.ok) {
+//             const errorText = await response.text();
+//             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+//         }
+
+//         const data = await response.json(); // Assuming the response is JSON
+//         console.log('Upload Success:', data);
+//         return data;
+//     } catch (error) {
+//         console.error('Error uploading files:', error.message);
+//         return { success: false, error: error.message };
+//     }
+// };
+
+export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNames, reqArr) => {
+    console.log('Request Array:', JSON.stringify(reqArr));
+    const url = `http://192.168.31.2:8080/user/translate/${uid}/upload`;
     const formData = new FormData();
 
+    // Append files, ids, and filePaths to the formData
     filesData.forEach(fileData => {
-        console.log('im here');
         formData.append('files', fileData.file); // 'file' part
         formData.append('ids', fileData.id); // 'id' part
         formData.append('filePaths', fileData.filePath); // 'filePath' part
     });
 
-    for (var pair of formData.entries()) {
-        console.log('sendFiles ' + pair[0] + ': ' + pair[1]); 
+    // Append model names
+    modelNames.forEach(modelName => {
+        formData.append('modelName', modelName);
+    });
+
+    // Append target language
+    formData.append('targetLanguage', targetLanguage);
+
+    // Append special instructions if provided
+    if (reqArr && Object.keys(reqArr).length > 0) {
+        Object.entries(reqArr).forEach(([id, instruction]) => {
+            formData.append(`specialInstructions[${id}]`, instruction);
+            console.log("im appending " + instruction + " to this id: " + id)
+        });
     }
 
-
-    formData.append('modelName', modelNames);
-
-    formData.append('targetLanguage', targetLanguage); // Correct parameter name
-
-    for (var pair of formData.entries()) {
-        console.log('sendFiles ' + pair[0] + ': ' + pair[1]); 
+    // Log the formData entries
+    for (const pair of formData.entries()) {
+        console.log('FormData Entry:', pair[0], pair[1]);
     }
 
     try {
@@ -267,8 +326,9 @@ export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNa
 
 
 
+
 export const PollingFile = async (uid, fileId, jwtToken, modelName) => {
-    const url = `http://192.168.31.6:8080/user/translate/${uid}/status`;
+    const url = `http://192.168.31.2:8080/user/translate/${uid}/status`;
     const params = new URLSearchParams({ id: fileId, modelName: modelName });
 
     try {
@@ -279,8 +339,10 @@ export const PollingFile = async (uid, fileId, jwtToken, modelName) => {
                 'Content-Type': 'application/json'
             }
         });
+        console.log(response);
 
         if (!response.ok) {
+            
             if (response.status === 400) {
                 throw new Error('Bad Request: Invalid parameters.');
             } else if (response.status === 404) {
@@ -312,19 +374,55 @@ export const PollingFile = async (uid, fileId, jwtToken, modelName) => {
 };
 
 
-export const RetryFile = async (fileId, file, lang, filePath) => {
-    //fileId for 500
-    //fileId, file, lang, filePath for 400
-    return(
-        {
-            "fileId": "file1",
-            "status": "submitted"
+// export const RetryFile = async (fileId, file, lang, filePath, modelName) => {
+//     //fileId for 500 status code
+//     //fileId, file, lang, filePath for 400 status code
+//     return(
+//         {
+//             "fileId": "file1",
+//             "status": "submitted"
+//         }
+//     );
+// }
+
+export const RetryFile = async (uid, jwtToken, fileId, modelName, file, filePath, lang, specialInstruction) => {
+    const url = `http://192.168.31.2:8080/user/translate/${uid}/retry`;
+    const formData = new FormData();
+
+    // Append the necessary fields to the formData
+    formData.append('id', fileId);
+    formData.append('modelName', modelName);
+    if (lang) formData.append('targetLanguage', lang);
+    if (filePath) formData.append('filePath', filePath);
+    if (specialInstruction) formData.append('specialInstruction', specialInstruction);
+    if (file) formData.append('file', file);
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
-    );
-}
+
+        const data = await response.json();
+        console.log('Retry Success:', data);
+        return data;
+    } catch (error) {
+        console.error('Error retrying file:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
 
 export const GetTranslation = async (uid, fileId, jwtToken, modelName) => {
-    const url = `http://192.168.31.6:8080/user/translate/${uid}/content`;
+    const url = `http://192.168.31.2:8080/user/translate/${uid}/content`;
     const params = new URLSearchParams({ id: fileId, modelName: modelName });
 
     try {
@@ -364,7 +462,7 @@ export const GetTranslation = async (uid, fileId, jwtToken, modelName) => {
 
 export const GetModels = async () => {
     try {
-        const response = await fetch('http://192.168.31.6:8080/public/website-info/ai-list');
+        const response = await fetch('http://192.168.31.2:8080/public/website-info/ai-list');
     
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -376,5 +474,82 @@ export const GetModels = async () => {
         console.error('Error fetching model data:', error);
         throw error;
       }
+}
+
+export const PollingHistory = async (uid, fileId, jwtToken) => {
+    const url = `http://192.168.31.2:8080/user/translate/${uid}/get-files-translated-models`;
+    const params = new URLSearchParams({ id: fileId });
+
+    console.log("uid: " + uid + "\nfileId: " + fileId);
+    try {
+        const response = await fetch(`${url}?${params}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log(response);
+
+        if (!response.ok) {
+            if (response.status === 400) {
+                throw new Error('Bad Request: Invalid parameters.');
+            } else if (response.status === 404) {
+                const errorData = await response.json();
+                throw new Error(errorData.status || 'ID not found');
+            } else if (response.status === 500){
+                throw new Error('Internal server error');
+            }
+            else {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+        }
+
+        const data = await response.json();
+        console.log('Polling History Status Success:', data.models);
+        return data.models;
+    } catch (error) {
+        console.error('Error updating history status:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+
+export const GetOriginal = async (uid, fileId, jwtToken) => {
+    const url = `http://192.168.31.2:8080/user/translate/${uid}/get-original-content`;
+    const params = new URLSearchParams({ id: fileId });
+
+    console.log("uid: " + uid + "\nfileId: " + fileId);
+    try {
+        const response = await fetch(`${url}?${params}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 400) {
+                throw new Error('Bad Request: Invalid parameters.');
+            } else if (response.status === 404) {
+                const errorData = await response.json();
+                throw new Error(errorData.status || 'ID not found');
+            } else if (response.status === 500){
+                throw new Error('Internal server error');
+            }
+            else {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+        }
+
+        const data = await response.json();
+        console.log('Orignal content Success:', data.content);
+        return data.content;
+    } catch (error) {
+        console.error('Error getting original content:', error.message);
+        return { success: false, error: error.message };
+    }
 }
 

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 
+
 const nextLinkRef = ref(null);
 
 onMounted(() => {

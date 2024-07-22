@@ -6,10 +6,13 @@ import { fileAttr } from '../shared/fileAttr.js';
 import Tree from 'primevue/tree';
 import "primeicons/primeicons.css";
 import Button from 'primevue/button';
+import Textarea from 'primevue/textarea';
 import CodeEditor from '../components/CodeEditor.vue';
 import LoadingSection from '../components/LoadingSection.vue'
+import FloatLabel from 'primevue/floatlabel';
 import ProgressSpinner from 'primevue/progressspinner';
 import { GetModels } from '../utils/apiCalls';
+
 
 const mimeTypes = {
     'txt': 'text/plain',
@@ -34,6 +37,7 @@ const mimeTypes = {
 
 
 const apiError = ref(null);
+const emit = defineEmits(['errorBool']);
 
 const selectedKey = ref({});
 const fileCode = ref(fileAttr.fileBef);
@@ -52,8 +56,13 @@ const nextLinkRef = ref(null);
 const isLoading = ref(true);
 const isSubmitted = ref(false);
 const hasFileSel = ref(false);
+const requestVal = ref('');
+const disableRequest = ref(true);
+
+
 
 const isEditable = computed(() => codeStr.value !== '');
+
 
 const expandAll = () => {
     for (let node of nodes.value) {
@@ -91,6 +100,17 @@ const findCodeByKey = (nodeList, searchKey) => {
         }
     }
     return null;
+};
+
+const findReqByKey = (nodeList, searchKey) => {
+    for (const [key, value] of Object.entries(nodeList)) {
+        if (value.key === searchKey) {
+            if(value.request){
+                return value.request;
+            }
+        }
+    }
+    return '';
 };
 
 const collectKeys = (nodes, keys = {}) => {
@@ -146,6 +166,7 @@ const editCodeBef = (nodeList, keyVal, codeNew) => {
         if(value.key == keyVal){
             value.code = codeNew;
             // console.log(value.name);
+            console.log('confirm type '+value.type);
             const codeBlob = convertCodeToBlob(codeNew, value.type);
             console.log("blob: "+codeBlob);
             value.content = codeBlob;
@@ -194,6 +215,27 @@ const checkHighlighted = (nodes) => {
     console.log(JSON.stringify(fileCode.value));
 }
 
+const checkRequest = (nodes) => {
+    nodes.forEach(node => {
+        if(node.styleClass == 'selectColor'){
+            console.log('request update ' + requestVal.value);
+            editRequest(fileCode.value, node.key, requestVal.value);
+            // console.log('code update '+JSON.stringify(fileCode.value));
+        }
+        if (node.children) {
+            checkRequest(node.children);
+        }
+    })
+    // console.log(JSON.stringify(fileCode.value));
+}
+const editRequest = (nodeList, keyVal, requestNew) => {
+    for (const value of nodeList) {
+        if(value.key == keyVal){
+            value.request = requestNew;
+        }
+    }
+}
+
 const unHighlight = async (nodes) => {
     nodes.forEach(node => {
         if(node.styleClass == 'selectColor'){
@@ -206,19 +248,13 @@ const unHighlight = async (nodes) => {
 }
 
 const gettingSetup = async () => {
+    if(fileAttr.setupData.languageOptions == 'Error fetching data'){
+        // apiError.value = error.message;
+        // emit('errorBool', true);
+        throw error;
+    }
     allLang.value = fileAttr.setupData.languageOptions;
-//   try {
-//     const data = await GetSetup();
-//     // console.log(data);
-//     allLang.value = data.languageOptions;
-//     // console.log(allLang.value);
-//     // console.log(excludeFiles.value);
-//     // console.log(excludeFolders.value);
-//     return data;
-//   } catch (error) {
-//     apiError.value = error.message;
-//     throw error;
-//   }
+    
 }
 
 const gettingModels = async () => {
@@ -244,19 +280,56 @@ const gettingModels = async () => {
     // console.log(excludeFolders.value);
     return data;
   } catch (error) {
-    apiError.value = error.message;
+    // apiError.value = error.message;
+    // emit('errorBool', true);
     throw error;
   }
 }
 
 onMounted(async () => {
-  await gettingSetup();
-  await gettingModels();
+    try{
+        await gettingSetup();
+        await gettingModels();
+        await expandAll();
+    }
+    catch(error){
+        apiError.value = error.message;
+        emit('errorBool', true);
+    }
+  
   console.log("this must exist "+ JSON.stringify(nodes.value));
   if(nodes.value.length == 0){
     console.log("refresh to home");
+    fileAttr.selectedLanguage = null;
+    fileAttr.selectedModel = [];
+    fileAttr.displayModel = [];
+    fileAttr.nodes = [];
+    fileAttr.fileBef = [];
+    fileAttr.fileAft = [];
+    // fileAttr.gotToFinal = null;
+    // fileAttr.gotToStart = true;
     window.location.href = '#/';
   }
+  else if(fileAttr.prevPage!='/' && fileAttr.prevPage!='#/'){
+    console.log("refresh to home");
+    fileAttr.selectedLanguage = null;
+    fileAttr.selectedModel = [];
+    fileAttr.displayModel = [];
+    fileAttr.nodes = [];
+    fileAttr.fileBef = [];
+    fileAttr.fileAft = [];
+    // fileAttr.gotToFinal = null;
+    // fileAttr.gotToStart = true;
+    window.location.href = '#/';
+  }
+  console.log('prev page is '+fileAttr.prevPage);
+
+//   else if(fileAttr.fileAft.length!=0){
+//     fileAttr.fileAft = [];
+    
+//     window.location.href = '#/';
+//   }
+
   isLoading.value = false;
 
   
@@ -269,7 +342,7 @@ onMounted(() => {
 
 watch(isSubmitted, (newVal) => {
     if(newVal==true && nextLinkRef.value){
-
+        fileAttr.prevPage = window.location.hash.slice(1) || '/';
         nextLinkRef.value.click();
     }
 }) 
@@ -372,6 +445,7 @@ const assignModels = (nodeList, modelNames) => {
 
 const submitModel = (model) => {
     console.log("this model "+ model[0].name);
+    fileAttr.selectedModel = [];
 
     // console.log('trans array: '+ JSON.stringify(transArr.value));
     // assignModels(transArr.value, model);
@@ -387,11 +461,15 @@ const submitModel = (model) => {
 
 const onNodeSelect = (node) => {
     if(node.label.includes('.')){
+        disableRequest.value = false;
         changeKey(nodes.value, node.key);
         let newCode = findCodeByKey(fileCode.value, node.key);
         codeStr.value = `${findCodeByKey(fileCode.value ,node.key)}`;
 
+        requestVal.value = `${findReqByKey(fileCode.value, node.key)}`
+
         codeLang.value = node.fileType;
+        console.log('selectable val: '+node.selectable);
 
         // if(codeLang.value == "py"){
         //     codeLang.value = "python";
@@ -399,9 +477,16 @@ const onNodeSelect = (node) => {
         //     codeLang.value = "javascript";
         // }
     } else {
+        disableRequest.value = true;
         codeStr.value = '请选择文档来展示';
     }
 };
+
+const saveRequest = (event) => {
+    // console.log('request changed '+event.target.value);
+    checkRequest(nodes.value)
+
+}
 </script>
 
 <template>
@@ -420,7 +505,16 @@ const onNodeSelect = (node) => {
                     </div>
                 </div>
                 <div class="codeSect">
-                    <CodeEditor :codeDoc="codeStr" :language="codeLang" :isEditable="isEditable" @update:codeDoc="handleCodeUpdate" @key-event="handleKeyEvent"/>
+                    <div class="codeText">
+                        <CodeEditor :codeDoc="codeStr" :language="codeLang" :isEditable="isEditable" @update:codeDoc="handleCodeUpdate" @key-event="handleKeyEvent"/>
+                    </div>
+                    <div class="inputText">
+                        <FloatLabel>
+                            <Textarea v-if="disableRequest" disabled/>
+                            <Textarea v-else v-model="requestVal" @input="saveRequest"/>
+                            <label>特别要求（比如“不要翻译任何姓名之类的词”）</label>
+                        </FloatLabel>
+                    </div>
                 </div>
             </div>
             <SelectLang 
@@ -458,10 +552,25 @@ const onNodeSelect = (node) => {
     flex-direction: column;
     gap: 20px;
 }
-.codeSect {
+.codeSect{
     width: 70%;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.codeText {
+    background-color: #282c34;
+    width: 100%;
+    height: 300px;
     overflow-y: scroll;
+    border-radius: 0.5rem;
+}
+.inputText{
+    height: 100px;
+}
+.inputText .p-textarea, .inputText .p-floatlabel{
+    height: 100%;
+    width: 100%;
 }
 .directBtn {
     display: flex;

@@ -125,7 +125,7 @@ watch(() => props.fileSelected, (newVal) => {
         </template>
     </ConfirmDialog>
     <div class="langSect">
-        <MultiSelect v-model="selectedModel" :options="modelSelections" @change="modelSel" optionLabel="name" filter placeholder="Select Models" display="chip" class="w-full md:w-80">
+        <MultiSelect v-model="selectedModel" :options="modelSelections" @change="modelSel" optionLabel="name" filter placeholder="选择模型" display="chip" class="w-full md:w-80">
             <template #option="slotProps">
                 <div class="flex items-center modelHover" v-tooltip.top="slotProps.option.desc">
                     <div>{{ slotProps.option.name }}</div>
@@ -193,9 +193,9 @@ a {
 </style>
 
 <style>
-.p-dialog {
+/* .p-dialog {
     width: 50vw;
-}
+} */
 .p-dialog-footer .p-button {
     background-color: #3385ff;
     border-color: #3385ff;

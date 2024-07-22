@@ -60,7 +60,7 @@ const gettingSetup = async () => {
 
 const testProxy = async () => {
   try {
-    const response = await fetch('http://192.168.31.6:8080/public/website-info');
+    const response = await fetch('http://192.168.31.2:8080/public/website-info');
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -120,12 +120,15 @@ onMounted(async () => {
   await gettingSetup();
   isLoading.value = false;
 
+  window.onbeforeunload = function() { console.log('gobackhome') };
+
+
 });
 
 </script>
 
 <template>
-  <link rel="stylesheet" href="https://at.alicdn.com/t/c/font_4585610_jtbux2m9he.css">
+  <link rel="stylesheet" href="https://at.alicdn.com/t/c/font_4585610_gove3xs4qw.css">
   <!-- <div v-if="isLoading" class="loading">
     <div class="loadingScreen">
         <ProgressSpinner style="width: 20%; height: 20%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />

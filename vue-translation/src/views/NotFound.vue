@@ -1,10 +1,12 @@
 <script setup>
 import { onMounted, ref } from 'vue';
+import { fileAttr } from '../shared/fileAttr.js';
 
 const nextLinkRef = ref(null);
 const timerVal = ref(5);
 
 onMounted(() => {
+    fileAttr.prevPage = '#/';
     if (nextLinkRef.value) {
         setTimeout(() => nextLinkRef.value.click(), 5000);
     }

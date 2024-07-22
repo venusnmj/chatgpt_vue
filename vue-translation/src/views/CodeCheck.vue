@@ -24,7 +24,7 @@ const dropdownVisiblePost = ref(false);
 const expandedKeys = ref({});
 const nodes = ref(fileAttr.nodes);
 const fileCode = ref(fileAttr.fileBef);
-const transArr = ref(fileAttr.fileAft);
+// const transArr = ref(fileAttr.fileAft);
 const userID = ref(fileAttr.userId);
 const storeJwt = ref(fileAttr.userJwt);
 const selectModel = ref(fileAttr.selectedModel);
@@ -50,6 +50,9 @@ const modelOptions = ref([]);
 const downloadVisible = ref(false);
 const downloadMod = ref(0);
 const OptError = ref(false);
+
+const emit = defineEmits(['errorBool']);
+
 
 // const options = ref(['One-Way', 'Return']);
 
@@ -103,10 +106,11 @@ const collectKeys = (nodes, keys = {}) => {
 const GetTranslated = async (userId, fileId, userJwt, modelName) => {
     try {
         const data = await GetTranslation(userId, fileId, userJwt, modelName);
-        console.log("new GetTranslation" + data.content);
+        // console.log("new GetTranslation" + data.content);
         return data.content;
     } catch (error) {
         console.error('Error getting translation:', error.message);
+        emit('errorBool', true);
         throw error;
     }
 };
@@ -158,9 +162,40 @@ onMounted(async () => {
 
     activeChip.value = disModel.value[0];
 
+    // fileAttr.gotToFinal = true;
+
     if(nodes.value.length == 0){
+        fileAttr.selectedLanguage = null;
+        fileAttr.selectedModel = [];
+        fileAttr.displayModel = [];
+        fileAttr.nodes = [];
+        fileAttr.fileBef = [];
+        fileAttr.fileAft = [];
+        // fileAttr.gotToFinal = null;
+        // fileAttr.gotToStart = true;
         window.location.href = '#/';
     }
+    else if(fileAttr.prevPage!='/translating'){
+        console.log("refresh to home");
+        fileAttr.selectedLanguage = null;
+        fileAttr.selectedModel = [];
+        fileAttr.displayModel = [];
+        fileAttr.nodes = [];
+        fileAttr.fileBef = [];
+        fileAttr.fileAft = [];
+        // fileAttr.gotToFinal = null;
+        // fileAttr.gotToStart = true;
+        window.location.href = '#/';
+    }
+    console.log('prev page is '+fileAttr.prevPage);
+    // else if(fileAttr.gotToStart != null){
+    //     // fileAttr.fileAft = [];
+    //     // fileAttr.gotToFinal=null;
+    //     fileAttr.gotToStart = null;
+        
+    //     window.location.href = '#/';
+    // }
+    // console.log('after retry '+fileAttr.gotToStart);
 
 
 });
@@ -205,22 +240,32 @@ const traverseTree = async (nodes, zip, path = '') => {
             if(node.translate && node.completed){
                 for(var i=0; i<node.transCode.length; i++){
                     if(node.transCode[downloadMod.value]){
-                        console.log(node.transCode[downloadMod.value]);
+                        // console.log(node.transCode[downloadMod.value]);
                         console.log(`Adding file: ${currentPath}`);
                         zip.file(currentPath, node.transCode[downloadMod.value]);
                     }
+                    else if(node.content){
+                        console.log(`image? ${currentPath}`);
+                        zip.file(currentPath, node.content);
+                    }
                     else {
+                        console.log(node);
                         console.warn(`Skipping empty file: ${currentPath}`);
                     }
                 }
             }
             else{
                 if(node.transCode){
-                    console.log(node.transCode);
+                    // console.log(node.transCode);
                     console.log(`Adding file: ${currentPath}`);
                     zip.file(currentPath, node.transCode);
                 }
+                else if(node.content){
+                    console.log(`image? ${currentPath}`);
+                    zip.file(currentPath, node.content);
+                }
                 else {
+                    console.log(node);
                     console.warn(`Skipping empty file: ${currentPath}`);
                 }
             }
@@ -292,7 +337,13 @@ watch(selectedKey, (newVal, oldVal) => {
     const node = findNodeByKey(fileCode.value, key);
     if (node !== null) {
         selectedFile.value = node[1].name;
-        fileType.value = "pi pi-fw pi-file";
+        if(node[1].completed){
+            fileType.value = "pi pi-fw pi-check-circle";
+        }
+        else{
+            fileType.value = "pi pi-fw pi-file";
+        }
+        
         // console.log(node[1].code);
 
         codeStr.value = `${node[1].code}`;
@@ -322,6 +373,8 @@ watch(selectedKey, (newVal, oldVal) => {
         selectedFile.value = findLabelByKey(fileAttr.nodes, key);
         console.log(selectedFile.value);
         fileType.value = 'pi pi-fw pi-folder';
+        codeStr.value = '请选择文档来展示';
+        codeResult.value = '请选择文档来展示';
     }
 
     if (oldVal) {
@@ -383,6 +436,19 @@ const handleResultUpdate = (newCode) => {
         }
     }
 };
+
+const againButton = async () => {
+    fileAttr.selectedLanguage = null;
+    fileAttr.selectedModel = [];
+    fileAttr.displayModel = [];
+    fileAttr.nodes = [];
+    fileAttr.fileBef = [];
+    fileAttr.fileAft = [];
+    // fileAttr.gotToFinal = null;
+    // fileAttr.gotToStart = true;
+    fileAttr.prevPage = window.location.hash.slice(1) || '/';
+    window.location.href = '#/';
+}
 
 
 </script>
@@ -448,7 +514,7 @@ const handleResultUpdate = (newCode) => {
       </div>
       <div class="modelChoose">
           <div class="modelDisplay">
-              <Chip label="Original Content" class="selected"/>
+              <Chip label="原本版" class="selected"/>
           </div>
           <div class="modelDisplay">
             
@@ -457,7 +523,7 @@ const handleResultUpdate = (newCode) => {
               :label="mod"
               :class="{ active: activeChip === mod }" 
               @click="changeCodeModel(mod)"/>
-              <Chip v-else label="Original Content" class="selected"/>
+              <Chip v-else label="原本版" class="selected"/>
               <!-- <Chip label="Action" className="chipModel"/> -->
               <!-- <Chip label="Comedy" className="chipModel"/> -->
           </div>
@@ -482,7 +548,7 @@ const handleResultUpdate = (newCode) => {
           <ButtonGrad className="btnTrans btnRight" :htmlContent="downloadText" @click="downloadVisible = true"/>
         </div>
         <div class="btnBtm">
-          <a href="#/">
+          <a @click="againButton">
             <ButtonGrad className="btnTrans" :htmlContent="agnText"/>
           </a>
         </div>
@@ -549,6 +615,9 @@ div.pre-Ctrl, div.post-Ctrl {
     display: flex;
     gap: 1rem;
     align-items: center;
+}
+.showFile .pi-check-circle{
+    color: #16a34a;
 }
 .cm-editor.ͼo {
   height: 100%;

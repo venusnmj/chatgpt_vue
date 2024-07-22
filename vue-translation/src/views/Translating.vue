@@ -8,7 +8,8 @@ import LoadingBar from '../components/LoadingBar.vue';
 import ProgressSpinner from 'primevue/progressspinner';
 import Button from 'primevue/button';
 import ButtonGrad from '../components/ButtonGrad.vue'
-import { SendFile, PollingFile, RetryFile, GetTranslation } from '../utils/apiCalls';
+import { SendFile, PollingFile, RetryFile } from '../utils/apiCalls';
+import { file } from 'jszip';
 
 const apiError = ref(null);
 const fileError = ref(false);
@@ -23,6 +24,7 @@ const selectLang = ref(fileAttr.selectedLanguage);
 const selectModel = ref(fileAttr.selectedModel);
 const nodes = ref(fileAttr.nodes);
 const storeJwt = ref(fileAttr.userJwt);
+const emit = defineEmits(['errorBool']);
 
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
@@ -36,6 +38,7 @@ const doneProcess = ref(0);
 const nextLinkRef = ref(null);
 const restartLink = ref(null);
 const sentArr = ref([]);
+const failedFiles = ref([]);
 
 // Computed property for progress string
 const loadString = computed(() => {
@@ -102,7 +105,22 @@ const PollingFiles = async (fileArr, total, userId, userJwt) => {
                     doneProcess.value = done;
                 }
                 else{
-                    console.log('errorBool should change');
+                    
+                    console.log('failed state '+state);
+                    // console.log('errorBool should change');
+                    console.log('failed file '+ JSON.stringify(value));
+                    const newFailure = {
+                        fileId: value.fileId,
+                        content: value.content,
+                        path: value.path,
+                        model: selectModel.value[i],
+                        request: value.request ? value.request : null,
+                        error: state
+                    }
+                    failedFiles.value.push(newFailure);
+                    pgLoading.value = false;
+                    errorBool.value = true;
+                    emit('errorBool', true);
                 }
             }
             
@@ -125,17 +143,26 @@ const completedLoad = async (done, total) => {
 const HandlePolling = async (userId, fileId, userJwt, modelName) => {
     try {
         const data = await PollingFile(userId, fileId, userJwt, modelName);
-        if (data.error === 'Internal server error') {
+        if(data.error){
+            console.log('poll error '+data.error)
+            pgLoading.value = false;
             errorBool.value = true;
-        } else if (data.error === 'ID not found') {
-            currentPath.value = '#/';
+            return data.error;
         }
+        // if (data.error === 'Internal server error') {
+        //     pgLoading.value = false;
+        //     errorBool.value = true;
+        // } else if (data.error === 'ID not found') {
+        //     currentPath.value = '#/';
+        // }
         return data.status;
     } catch (error) {
         apiError.value = error.message;
+        emit('errorBool', true);
         throw error;
     }
 }
+
 
 // Function to find node by key
 const findNodeByKey = (nodeList, searchKey) => {
@@ -165,14 +192,20 @@ const findLabelByKey = (nodes, searchKey) => {
 
 // Prepare next step
 const prepNext = async () => {
+    fileAttr.prevPage = window.location.hash.slice(1) || '/';
     nextLinkRef.value.click();
 }
 
 // Submit selected files for translation
 const SubmitSelected = async (fileArr, tarLang, userId, userJwt, modelNames) => {
     let sentArr = [];
+    let reqArr = {};
     console.log("before submitfiles filearr " + fileArr.value);
     for (const [key, value] of Object.entries(fileArr)) {
+        if(value.request){
+            console.log('check request new pg '+value.request)
+            reqArr[value.fileId] = value.request;
+        }
         if (value.translate) {
             const newSent = {
                 id: value.fileId,
@@ -183,29 +216,43 @@ const SubmitSelected = async (fileArr, tarLang, userId, userJwt, modelNames) => 
         }
     }
     console.log("before submitfiles " + sentArr.value);
-    await SubmitFiles(userId, sentArr, userJwt, tarLang, modelNames);
+    await SubmitFiles(userId, sentArr, userJwt, tarLang, modelNames, reqArr);
     return sentArr.length;
 };
 
 // Submit files
-const SubmitFiles = async (userId, filesData, jwt, tarLang, modelNames) => {
+const SubmitFiles = async (userId, filesData, jwt, tarLang, modelNames, reqArr) => {
     try {
-        console.log("beforecallingapi "+filesData.value);
-        filesData.forEach(fileData => {
-            console.log('i need help');
+        // console.log("beforecallingapi "+filesData.value);
+        // filesData.forEach(fileData => {
+        //     console.log('i need help');
             
-        });
-        const data = await SendFile(userId, filesData, jwt, tarLang, modelNames);
+        // });
+        const data = await SendFile(userId, filesData, jwt, tarLang, modelNames, reqArr);
         return data;
     } catch (error) {
         console.error('API Error:', error.message);
         throw error;
+        
     }
 };
 
 const retryTranslation = async () => {
-
-    await RetryFile (fileId, file, lang, filePath);
+    for(const retryFile of failedFiles.value){
+        console.log(retryFile);
+        console.log(retryFile.error);
+        if(retryFile.error == 'Bad Request: Invalid parameters.'){
+            // await RetryFile(userID.value, storeJwt.value, retryFile.fileId, retryFile.model, retryFile.content, retryFile.path, selectLang.value, retryFile.request);
+        }
+        else if(retryFile.error == 'Internal server error'){
+            await RetryFile(userID.value, storeJwt.value, retryFile.fileId, retryFile.model);
+            const state = await HandlePolling(useruserID.value, retryFile.fileId, storeJwt.value, retryFile.model);
+        }
+        else{
+            emit('errorBool', true);
+        }
+    }
+    
 }
 
 // Watch selected key
@@ -228,16 +275,48 @@ onMounted(async () => {
     selectedFile.value = findLabelByKey(nodes.value, 0);
 
     allProcess.value = await SubmitSelected(transArr.value, selectLang.value, userID.value, storeJwt.value, selectModel.value)*selectModel.value.length;
+
+    if(nodes.value.length == 0){
+        // console.log("refresh to home");
+        fileAttr.selectedLanguage = null;
+        fileAttr.selectedModel = [];
+        fileAttr.displayModel = [];
+        fileAttr.nodes = [];
+        fileAttr.fileBef = [];
+        fileAttr.fileAft = [];
+        // fileAttr.gotToFinal = null;
+        // fileAttr.gotToStart = true;
+        window.location.href = '#/';
+    }
+    else if(fileAttr.prevPage!='/review'){
+        console.log("refresh to home");
+        fileAttr.selectedLanguage = null;
+        fileAttr.selectedModel = [];
+        fileAttr.displayModel = [];
+        fileAttr.nodes = [];
+        fileAttr.fileBef = [];
+        fileAttr.fileAft = [];
+        // fileAttr.gotToFinal = null;
+        // fileAttr.gotToStart = true;
+        window.location.href = '#/';
+    }
+    console.log('prev page is '+fileAttr.prevPage);
+
     pgLoading.value = false;
 
     doneProcess.value = await PollingFiles(transArr.value, allProcess.value, userID.value, storeJwt.value);
     await completedLoad(doneProcess.value, allProcess.value);
     addCompleted(transArr.value, nodes.value);
     
-    if(nodes.value.length == 0){
-        console.log("refresh to home");
-        window.location.href = '#/';
-    }
+    
+
+    // else if(fileAttr.gotToFinal!=null){
+    //     // console.log("refresh to home");
+    //     fileAttr.gotToFinal=null;
+    //     window.location.href = '#/';
+        
+    // }
+    
 });
 </script>
 

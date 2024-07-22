@@ -1,9 +1,13 @@
 <script setup>
 import { onMounted, ref } from 'vue';
+import { fileAttr } from '../shared/fileAttr.js';
+
 
 const nextLinkRef = ref(null);
 
 onMounted(() => {
+    fileAttr.prevPage = '#/';
+
 });
 
 </script>
