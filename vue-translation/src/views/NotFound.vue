@@ -6,7 +6,7 @@ const nextLinkRef = ref(null);
 const timerVal = ref(5);
 
 onMounted(() => {
-    fileAttr.prevPage = '#/';
+    fileAttr.prevPage = '/';
     if (nextLinkRef.value) {
         setTimeout(() => nextLinkRef.value.click(), 5000);
     }

@@ -13,6 +13,7 @@ import FloatLabel from 'primevue/floatlabel';
 import ProgressSpinner from 'primevue/progressspinner';
 import { GetModels } from '../utils/apiCalls';
 
+const MAX_CHARS = 500;
 
 const mimeTypes = {
     'txt': 'text/plain',
@@ -32,9 +33,6 @@ const mimeTypes = {
     'yml': 'application/x-yaml',
     // Add more mappings as needed
 };
-
-
-
 
 const apiError = ref(null);
 const emit = defineEmits(['errorBool']);
@@ -59,10 +57,9 @@ const hasFileSel = ref(false);
 const requestVal = ref('');
 const disableRequest = ref(true);
 
-
+const remainingChars = computed(() => MAX_CHARS - requestVal.value.length);
 
 const isEditable = computed(() => codeStr.value !== '');
-
 
 const expandAll = () => {
     for (let node of nodes.value) {
@@ -400,9 +397,6 @@ const TranslatableArr = async (nodeList) => {
     }
 }
 
-
-
-
 const submitLanguage = (lang) => {
     // console.log("language on submit "+lang);
     isLoading.value = true;
@@ -457,8 +451,6 @@ const submitModel = (model) => {
     
 }
 
-
-
 const onNodeSelect = (node) => {
     if(node.label.includes('.')){
         disableRequest.value = false;
@@ -511,9 +503,12 @@ const saveRequest = (event) => {
                     <div class="inputText">
                         <FloatLabel>
                             <Textarea v-if="disableRequest" disabled/>
-                            <Textarea v-else v-model="requestVal" @input="saveRequest"/>
+                            <Textarea v-else v-model="requestVal" maxlength="500" @input="saveRequest"/>
                             <label>特别要求（比如“不要翻译任何姓名之类的词”）</label>
                         </FloatLabel>
+                        <div v-if="!disableRequest" class="char-counter">
+                            {{ remainingChars }} characters remaining
+                        </div>
                     </div>
                 </div>
             </div>
@@ -557,6 +552,7 @@ const saveRequest = (event) => {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    padding-bottom: 1rem;
 }
 .codeText {
     background-color: #282c34;
@@ -622,12 +618,10 @@ const saveRequest = (event) => {
     padding: 2rem;
     border-radius: 10px;
 }
-/* .loadingScreen{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    gap: 1rem;
-    padding: 3rem;
-} */
+.char-counter {
+    font-size: 0.8rem;
+    color: #666;
+    text-align: right;
+    margin-top: 5px;
+}
 </style>

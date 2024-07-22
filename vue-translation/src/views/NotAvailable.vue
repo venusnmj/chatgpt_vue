@@ -6,7 +6,7 @@ import { fileAttr } from '../shared/fileAttr.js';
 const nextLinkRef = ref(null);
 
 onMounted(() => {
-    fileAttr.prevPage = '#/';
+    fileAttr.prevPage = '/';
 
 });
 
