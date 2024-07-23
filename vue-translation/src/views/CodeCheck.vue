@@ -381,6 +381,7 @@ watch(selectedKey, (newVal, oldVal) => {
         fileType.value = 'pi pi-fw pi-folder';
         codeStr.value = '请选择文档来展示';
         codeResult.value = '请选择文档来展示';
+        hasTrans.value = false;
     }
 
     if (oldVal) {
@@ -521,7 +522,7 @@ const againButton = async () => {
       </div>
       <div class="modelChoose">
           <div class="modelDisplay desktopView">
-              <Chip label="原本版" class="selected"/>
+              <Chip label="原版" class="selected"/>
           </div>
           <div class="modelDisplay">
             
@@ -530,7 +531,7 @@ const againButton = async () => {
               :label="mod"
               :class="{ active: activeChip === mod }" 
               @click="changeCodeModel(mod)"/>
-              <Chip v-else label="原本版" class="selected"/>
+              <Chip v-else label="原版" class="selected"/>
               <!-- <Chip label="Action" className="chipModel"/> -->
               <!-- <Chip label="Comedy" className="chipModel"/> -->
           </div>

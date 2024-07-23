@@ -3,7 +3,7 @@
 </script>
 
 <template>
-    <div class="desktopView">
+    <div class="desktopView centerView">
         <div class="stepCont">
             <div class="step">
                 <i class="iconfont icon-upload"></i>
@@ -50,13 +50,19 @@
     .mobileView{
         display: none;
     }
-   
+    
+    .centerView{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
     .desktopView .stepCont{
         display: flex;
         align-items: center;
         gap: 1rem;
         padding: 1rem 4rem;
         width: 100%;
+        max-width: 60rem;
     }
     .desktopView .step {
         display: flex;
@@ -102,7 +108,9 @@
         background-color: #0273FF;
         color: white;
     }
+    
     @media only screen and (max-width: 768px) {
+        
         .desktopView {
             display: none;
         }

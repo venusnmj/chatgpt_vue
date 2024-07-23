@@ -291,7 +291,7 @@ const handleIndividualFile = async (file, getKey) => {
       children: [],
       // selectable: fileTranslatable,
       fileType: file.name.split('.').pop(),
-      content: blob,
+      content: file,
     };
 
     befFiles.value.push({
@@ -999,7 +999,7 @@ onMounted(async () => {
           </div>
           <div class="hisCompleted" v-else-if="popCompleted">
             <div class="codeHandle">
-              <div class="codeBef">
+              <div class="codeBef desktopView">
                 <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate" :isEditable="false"/>
               </div>
               <div class="codeAft">
@@ -1235,6 +1235,26 @@ div.codeBef, div.codeAft {
   display: flex;
   justify-content: center;
 }
+@media only screen and (max-width: 768px) {
+  div.codeBef, div.codeAft{
+    width: 100%;
+    max-height: 50%;
+  }
+}
+.desktopView, div.desktopView {
+    display: block;
+}
+.mobileView, div.mobileView{
+    display: none;
+}
+@media only screen and (max-width: 768px) {
+  .desktopView, div.desktopView {
+      display: none;
+  }
+  .mobileView, div.mobileView{
+      display: block;
+  }
+}
 </style>
 <style>
 .p-dialog-header .p-dialog-title{
@@ -1253,6 +1273,12 @@ div.codeBef, div.codeAft {
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .codeHandle{
+    flex-direction: column;
+  }
+  div.codeBef, div.codeAft{
+    width: 100%;
   }
 }
 

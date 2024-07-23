@@ -349,11 +349,11 @@ watch(selectedMobileKey, (newVal, oldVal) => {
     const node = findNodeByKey(fileCode.value, key);
     if (node !== null) {
         selectedFile.value = node[1].name;
-        if(node[1].completed){
-            fileType.value = "pi pi-fw pi-check-circle";
+        if(node[1].name.includes('.')){
+            disableRequest.value = false;
         }
         else{
-            fileType.value = "pi pi-fw pi-file";
+            disableRequest.value = true;
         }
         
         // console.log(node[1].code);
@@ -374,6 +374,7 @@ watch(selectedMobileKey, (newVal, oldVal) => {
         // }
         console.log("codeLang: " + codeLang.value);
     } else {
+        disableRequest.value = true;
         selectedFile.value = findLabelByKey(fileAttr.nodes, key);
         console.log(selectedFile.value);
         fileType.value = 'pi pi-fw pi-folder';
@@ -603,14 +604,16 @@ const findLabelByKey = (nodes, searchKey) => {
                             <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
                             <i class="pi pi-chevron-down"></i>
                             </div>
-                            <div v-if="dropdownVisiblePre" class="dropdown-content">
-                            <Tree
+                            <div v-if="dropdownVisiblePre" class="dropdown-content checked">
+                                <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" @nodeSelect="onNodeSelect" @nodeUnselect="onNodeSelect" class="w-full md:w-[30rem] file-tree">
+                                </Tree>
+                            <!-- <Tree
                                 v-model:selectionKeys="selectedMobileKey"
                                 v-model:expandedKeys="expandedKeys"
                                 :value="fileAttr.nodes"
                                 selectionMode="single"
                                 @node-select="handleNodeSelectPre"
-                            />
+                            /> -->
                             </div>
                         </div>
                     </div>
@@ -644,6 +647,9 @@ const findLabelByKey = (nodes, searchKey) => {
     </div>
 </template>
 
+<style scoped>
+
+</style>
 <style>
 .file-tree .p-tree-node-selectable {
     position: relative;
@@ -781,7 +787,7 @@ const findLabelByKey = (nodes, searchKey) => {
         border-radius: 0.25rem;
         background-color: #fff;
     }
-    .dropdown-content {
+    .dropdown-content.checked {
         position: absolute;
         top: 100%;
         left: 0;
@@ -791,6 +797,7 @@ const findLabelByKey = (nodes, searchKey) => {
         width: 100%;
         max-height: 300px;
         overflow-y: auto;
+        padding: 5vw;
     }
     .dropdown-toggle i {
         margin-left: auto;

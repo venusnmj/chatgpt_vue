@@ -63,4 +63,9 @@
     .loadingText p{
         color: #0273FF;
     }
+    @media only screen and (max-width: 768px) {
+        .loadingSect{
+            padding: 0rem;
+        }
+    }
 </style>

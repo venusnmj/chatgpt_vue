@@ -41,4 +41,9 @@ onMounted(() => {
     padding: 2rem;
     border-radius: 10px;
 }
+@media only screen and (max-width: 768px) {
+  .muted-sect {
+    padding: 5vw;
+  }
+}
 </style>
