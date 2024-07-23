@@ -190,6 +190,19 @@ a {
 .modelHover {
     width: 100%;
 }
+@media only screen and (max-width: 768px) {
+    .langSect{
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .langSect a{
+        align-self: center;
+    }
+    .langMenu select{
+        width: 100%;
+    }
+
+}
 </style>
 
 <style>
@@ -218,4 +231,5 @@ a {
 .p-multiselect-label-container {
     width: 17rem;
 }
+
 </style>

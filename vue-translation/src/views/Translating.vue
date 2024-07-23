@@ -520,11 +520,11 @@ h3.notice.done{
 a {
   text-decoration: none;
 }
-.muted-sect{
+/* .muted-sect{
     background-color: #F0F2F5;
     padding: 2rem;
     border-radius: 10px;
-}
+} */
 </style>
 <style>
 .p-progressspinner-spin .p-progressspinner-circle{

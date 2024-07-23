@@ -57,9 +57,18 @@ const hasFileSel = ref(false);
 const requestVal = ref('');
 const disableRequest = ref(true);
 
+const selectedFile = ref(null);
+const activeFile = ref();
+const selectedMobileKey = ref(null);
+const dropdownVisiblePre = ref(false);
+const fileType = ref('pi pi-fw pi-folder');
+
+
+
 const remainingChars = computed(() => MAX_CHARS - requestVal.value.length);
 
 const isEditable = computed(() => codeStr.value !== '');
+
 
 const expandAll = () => {
     for (let node of nodes.value) {
@@ -284,6 +293,7 @@ const gettingModels = async () => {
 }
 
 onMounted(async () => {
+    selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
     try{
         await gettingSetup();
         await gettingModels();
@@ -330,6 +340,70 @@ onMounted(async () => {
   isLoading.value = false;
 
   
+});
+watch(selectedMobileKey, (newVal, oldVal) => {
+    // console.log(Object.keys(newVal));
+    const key = Object.keys(newVal)[0];
+    activeFile.value = key;
+    console.log("should i save this key? "+key)
+    const node = findNodeByKey(fileCode.value, key);
+    if (node !== null) {
+        selectedFile.value = node[1].name;
+        if(node[1].completed){
+            fileType.value = "pi pi-fw pi-check-circle";
+        }
+        else{
+            fileType.value = "pi pi-fw pi-file";
+        }
+        
+        // console.log(node[1].code);
+
+        codeStr.value = `${node[1].code}`;
+
+        console.log("check node "+ JSON.stringify(node[1]));
+        // console.log(storeMod.value);
+        
+        
+
+
+        codeLang.value = node[1].type;
+        // if (codeLang.value == "py") {
+        //     codeLang.value = "python";
+        // } else if (codeLang.value == "js") {
+        //     codeLang.value = "javascript";
+        // }
+        console.log("codeLang: " + codeLang.value);
+    } else {
+        selectedFile.value = findLabelByKey(fileAttr.nodes, key);
+        console.log(selectedFile.value);
+        fileType.value = 'pi pi-fw pi-folder';
+        codeStr.value = '请选择文档来展示';
+        // codeResult.value = '请选择文档来展示';
+    }
+
+    if (oldVal) {
+        let testVal = oldVal;
+        let oppVal = newVal;
+        for (const [key, value] of Object.entries(testVal)) {
+            if (!oppVal || !oppVal[key] || oppVal[key].checked !== value.checked || oppVal[key].partialChecked !== value.partialChecked) {
+                if (value.checked === true && value.partialChecked === false) {
+                    const node = findNodeByKey(fileCode.value, key);
+                    if (node !== null) {
+                        console.log("node is " + node[1].name);
+                        codeStr.value = `${node[1].code}`;
+                        // codeResult.value = `${node[1].transCode}`;
+                        codeLang.value = node[1].type;
+                        // if (codeLang.value == "py") {
+                        //     codeLang.value = "python";
+                        // } else if (codeLang.value == "js") {
+                        //     codeLang.value = "javascript";
+                        // }
+                        console.log("codeLang: " + codeLang.value);
+                    }
+                }
+            }
+        }
+    }
 });
 
 onMounted(() => {
@@ -479,6 +553,36 @@ const saveRequest = (event) => {
     checkRequest(nodes.value)
 
 }
+
+const toggleDropdownPre = () => {
+    dropdownVisiblePre.value = !dropdownVisiblePre.value;
+};
+
+const handleNodeSelectPre = (event) => {
+    console.log("pre" + JSON.stringify(selectedKey.value));
+    dropdownVisiblePre.value = false;
+};
+
+const selectedKeyLabel = computed(() => {
+    return selectedFile.value ? selectedFile.value : '选择文件';
+});
+
+const findLabelByKey = (nodes, searchKey) => {
+    for (const node of nodes) {
+        if (node.key === searchKey) {
+            return node.label;
+        }
+        if (node.children && node.children.length > 0) {
+            const foundLabel = findLabelByKey(node.children, searchKey);
+            if (foundLabel) {
+                return foundLabel;
+            }
+        }
+    }
+    return null;
+};
+
+
 </script>
 
 <template>
@@ -492,8 +596,23 @@ const saveRequest = (event) => {
                         <Button type="button" icon="pi pi-minus" label="Collapse All" @click="collapseAll">收起</Button>
                     </div>
                     <div class="fileDir" ref="clickDir">
-                        <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" @nodeSelect="onNodeSelect" @nodeUnselect="onNodeSelect" class="w-full md:w-[30rem] file-tree">
+                        <Tree v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" :value="fileAttr.nodes" selectionMode="checkbox" @nodeSelect="onNodeSelect" @nodeUnselect="onNodeSelect" class="w-full md:w-[30rem] file-tree desktopView">
                         </Tree>
+                        <div class="dropdown-container mobileView">
+                            <div class="dropdown-toggle" @click="toggleDropdownPre">
+                            <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
+                            <i class="pi pi-chevron-down"></i>
+                            </div>
+                            <div v-if="dropdownVisiblePre" class="dropdown-content">
+                            <Tree
+                                v-model:selectionKeys="selectedMobileKey"
+                                v-model:expandedKeys="expandedKeys"
+                                :value="fileAttr.nodes"
+                                selectionMode="single"
+                                @node-select="handleNodeSelectPre"
+                            />
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="codeSect">
@@ -613,15 +732,68 @@ const saveRequest = (event) => {
     color: #16a34a;
 }
 
-.muted-sect{
+/* .muted-sect{
     background-color: #F0F2F5;
     padding: 2rem;
     border-radius: 10px;
-}
+} */
 .char-counter {
     font-size: 0.8rem;
     color: #666;
     text-align: right;
     margin-top: 5px;
+}
+@media only screen and (max-width: 768px) {
+    .reviewCode {
+        flex-direction: column;
+    }
+    .directorySect, .codeSect{
+        width: 100%;
+    }
+    .fileDir{
+        height: auto;
+        overflow-y:visible;
+    }
+}
+
+
+.desktopView, div.desktopView {
+    display: block;
+}
+.mobileView, div.mobileView{
+    display: none;
+}
+@media only screen and (max-width: 768px) {
+  .desktopView, div.desktopView {
+      display: none;
+  }
+  .mobileView, div.mobileView{
+      display: block;
+  }
+  .dropdown-container {
+    position: relative;
+}
+    .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        background-color: #fff;
+    }
+    .dropdown-content {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: white;
+        border: 1px solid #ccc;
+        z-index: 1000;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .dropdown-toggle i {
+        margin-left: auto;
+    }
 }
 </style>

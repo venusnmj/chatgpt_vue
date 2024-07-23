@@ -481,7 +481,7 @@ const againButton = async () => {
     <LoadingSection v-if="isLoading"/>
     <div class="muted-sect" v-else>
       <div class="filesCtrl">
-        <div class="pre-Ctrl">
+        <div class="pre-Ctrl desktopView">
           <div class="dropdown-container">
             <div class="dropdown-toggle" @click="toggleDropdownPre">
               <span class="showFile"><i :class="fileType"></i>{{ selectedKeyLabel }}</span>
@@ -498,7 +498,7 @@ const againButton = async () => {
             </div>
           </div>
         </div>
-        <div class="arr-Ctrl">
+        <div class="arr-Ctrl desktopView">
           <i class="iconfont icon-right"/>
         </div>
         <div class="post-Ctrl">
@@ -520,7 +520,7 @@ const againButton = async () => {
         </div>
       </div>
       <div class="modelChoose">
-          <div class="modelDisplay">
+          <div class="modelDisplay desktopView">
               <Chip label="原本版" class="selected"/>
           </div>
           <div class="modelDisplay">
@@ -536,7 +536,7 @@ const againButton = async () => {
           </div>
       </div>
       <div class="codeHandle">
-          <div class="codeBef">
+          <div class="codeBef desktopView">
           <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate" :isEditable="false"/>
         </div>
         <div class="codeAft">
@@ -674,11 +674,11 @@ div.codeBef, div.codeAft {
     height: 100%;
 }
 
-.muted-sect {
+/* .muted-sect {
     background-color: #F0F2F5;
     padding: 2rem;
     border-radius: 10px;
-}
+} */
 .codeHandle {
     display: flex;
     gap: 1rem;
@@ -723,6 +723,25 @@ div.codeBef, div.codeAft {
 }
 .dlPopErrorMsg{
     color: #e06c75;
+}
+
+
+.desktopView, div.desktopView {
+    display: block;
+}
+.mobileView, div.mobileView{
+    display: none;
+}
+@media only screen and (max-width: 768px) {
+  .desktopView, div.desktopView {
+      display: none;
+  }
+  .mobileView, div.mobileView{
+      display: block;
+  }
+  div.post-Ctrl, div.codeAft, .modelDisplay{
+    width: 100%;
+  }
 }
 </style>
 <style>

@@ -168,9 +168,35 @@ onMounted(async () => {
   height: 100vh;
 }
 
-/* .muted-sect{
+.muted-sect {
     background-color: #F0F2F5;
     padding: 2rem;
     border-radius: 10px;
-} */
+}
+
+@media only screen and (max-width: 768px) {
+  .container{
+    padding: 5vw;
+  }
+  .muted-sect {
+    padding: 5vw;
+  }
+
+}
+</style>
+<style>
+.desktopView {
+    display: block;
+}
+.mobileView{
+    display: none;
+}
+@media only screen and (max-width: 768px) {
+  .desktopView {
+      display: none;
+  }
+  .mobileView{
+      display: block;
+  }
+}
 </style>

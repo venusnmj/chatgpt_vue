@@ -1158,11 +1158,11 @@ li {
   font-weight: 700;
   font-size: 1.2rem;
 }
-.muted-sect{
+/* .muted-sect{
     background-color: #F0F2F5;
     padding: 2rem;
     border-radius: 10px;
-}
+} */
 .loaded{
   display: flex;
   flex-direction: column;
@@ -1248,5 +1248,12 @@ div.codeBef, div.codeAft {
   margin-right: 5rem;
   margin-left: 5rem;
 } */
+@media only screen and (max-width: 768px) {
+  .file-drop-area{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 
 </style>

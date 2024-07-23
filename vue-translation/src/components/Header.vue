@@ -44,5 +44,13 @@ const props = defineProps({
     .stats{
         gap: 4rem;
     }
+    @media only screen and (max-width: 768px) {
+        header{
+            padding: 5vw;
+            padding-top: 50px;
+            gap: 10px;
+
+        }
+    }
     
 </style>

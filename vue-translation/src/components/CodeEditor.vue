@@ -140,4 +140,9 @@ watch(() => props.isEditable, (newEditable) => {
 /* .cm-editor {
   height: 400px;
 } */
+@media only screen and (max-width: 768px) {
+  .cm-editor {
+    height: 100%;
+  }
+}
 </style>
