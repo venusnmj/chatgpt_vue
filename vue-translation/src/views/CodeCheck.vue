@@ -16,6 +16,7 @@ import ButtonGrad from '../components/ButtonGrad.vue';
 import { GetTranslation } from '../utils/apiCalls';
 import JSZip from 'jszip';
 import FileSaver from 'file-saver';
+import LoadingScreen from '@/components/LoadingScreen.vue';
 
 
 const selectedKey = ref(null);
@@ -52,6 +53,8 @@ const downloadMod = ref(0);
 const OptError = ref(false);
 
 const emit = defineEmits(['errorBool']);
+const isLoading = ref(true);
+
 
 
 // const options = ref(['One-Way', 'Return']);
@@ -161,6 +164,7 @@ onMounted(async () => {
     selectedFile.value = findLabelByKey(fileAttr.nodes, 0);
 
     activeChip.value = disModel.value[0];
+    
 
     // fileAttr.gotToFinal = true;
 
@@ -188,6 +192,8 @@ onMounted(async () => {
         window.location.href = '#/';
     }
     console.log('prev page is '+fileAttr.prevPage);
+    isLoading.value = false;
+
     // else if(fileAttr.gotToStart != null){
     //     // fileAttr.fileAft = [];
     //     // fileAttr.gotToFinal=null;
@@ -472,7 +478,8 @@ const againButton = async () => {
             <Button label="下载" severity="info" @click="handleDownloadClick" autofocus />
         </template>
     </Dialog>
-    <div class="muted-sect">
+    <LoadingSection v-if="isLoading"/>
+    <div class="muted-sect" v-else>
       <div class="filesCtrl">
         <div class="pre-Ctrl">
           <div class="dropdown-container">

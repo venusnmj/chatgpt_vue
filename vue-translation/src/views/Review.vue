@@ -507,7 +507,7 @@ const saveRequest = (event) => {
                             <label>特别要求（比如“不要翻译任何姓名之类的词”）</label>
                         </FloatLabel>
                         <div v-if="!disableRequest" class="char-counter">
-                            {{ remainingChars }} characters remaining
+                            剩{{ remainingChars }}字
                         </div>
                     </div>
                 </div>

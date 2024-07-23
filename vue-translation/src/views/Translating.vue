@@ -121,6 +121,7 @@ const PollingFiles = async (fileArr, total, userId, userJwt) => {
                     pgLoading.value = false;
                     errorBool.value = true;
                     emit('errorBool', true);
+                    emit('errMsg', '请检查您上传的代码或文件夹名');
                 }
             }
             
@@ -250,6 +251,7 @@ const retryTranslation = async () => {
         }
         else{
             emit('errorBool', true);
+            emit('errMsg', '请检查您上传的代码或文件夹名');
         }
     }
     

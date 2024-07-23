@@ -33,6 +33,7 @@ const excludeFolders = ref([]);
 const setupInfo = ref();
 
 const apiError = ref(null);
+const errorMessage = ref('');
 
 
 const gettingSetup = async () => {
@@ -60,7 +61,7 @@ const gettingSetup = async () => {
 
 const testProxy = async () => {
   try {
-    const response = await fetch('http://192.168.31.2:8080/public/website-info');
+    const response = await fetch('http://192.168.0.104:8080/public/website-info');
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -89,6 +90,9 @@ window.addEventListener('hashchange', () => {
 
 const handleError = (value) => {
   toRetry.value = value;
+}
+const setErrorMsg = (value) => {
+  errorMessage.value = value;
 }
 
 const currentView = computed(() => {
@@ -140,7 +144,7 @@ onMounted(async () => {
         </h3>
     </div>
   </div> -->
-  <NotAvailable v-if="toRetry"/>
+  <NotAvailable v-if="toRetry" :errorMsg="errorMessage"/>
   <LoadingScreen v-else-if="isLoading"/> 
   <div v-else class="fullPage">
     <Header :userCount="userCnt" :fileCount="fileCnt" :appTitle="appName" :logoSrc="appLogo" />
@@ -148,7 +152,7 @@ onMounted(async () => {
     <div class="container">
       <div class="changing-sect">
           <!-- <component :is="currentView" :selectedLanguage="currentLanguage"/> -->
-          <component :is="currentView" @errorBool="handleError"/>
+          <component :is="currentView" @errorBool="handleError" @errMsg="setErrorMsg"/>
       </div>
     </div>
   </div>

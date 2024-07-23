@@ -1,10 +1,16 @@
 <script setup>
 import { onMounted, ref } from 'vue';
+import { fileAttr } from '../shared/fileAttr.js';
 
 
 const nextLinkRef = ref(null);
 
+const props = defineProps({
+    errorMsg: String,
+});
+
 onMounted(() => {
+    fileAttr.prevPage = '/';
 });
 
 </script>
@@ -13,9 +19,9 @@ onMounted(() => {
 <div class="full-sect">
     <div class="central">
         <i class="iconfont icon-error-fill"></i>
-        <h1>非常抱歉，我们在处理问题中</h1>
+        <h1>{{ errorMsg ? errorMsg : '非常抱歉，请找网络空间或稍后再试' }}</h1>
         <!-- <h3>请稍后再试</h3> -->
-        <a ref="nextLinkRef" href="." >请稍后再试</a>
+        <a ref="nextLinkRef" href="." >重新再试</a>
     </div>
 </div>
 

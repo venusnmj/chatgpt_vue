@@ -60,7 +60,7 @@ const hasHistory = ref(false);
 const fileHistory = ref([]);
 
 const apiError = ref(null);
-const emit = defineEmits(['errorBool']);
+const emit = defineEmits(['errorBool', 'errMsg']);
 const hasError = ref(false);
 const historyModels = ref(null);
 const popmodelVal = ref(null);
@@ -621,6 +621,7 @@ const gettingHistory = async (userId, jwt) => {
       const cleanHis = JSON.parse(data);
       const lastTen = cleanHis.slice(-10, cleanHis.length);
       console.log(lastTen.length);
+
       // for(const process of lastTen){
       //   console.log(process.fileId);
       //   const historyStatus = await HandlePolling(userId, process.fileId, jwt);
@@ -705,6 +706,7 @@ const historyPop = async (fileId, filePath) => {
       popCompleted.value = true;
       popError.value = false;
       popProcessing.value = false;
+      codeLang.value = filePath.split('.').pop();
       try{
         await miniCodecheck();
       }
@@ -963,7 +965,7 @@ onMounted(async () => {
       已翻译的文件
     </h3>
     <div class="pastFiles">
-      <Button  v-for="history in fileHistory" 
+      <Button  v-for="history in fileHistory.slice().reverse()" 
       @click="historyPop(history.fileId, history.filePath)"
       :label=" history.filePath ? history.filePath.substring(history.filePath.lastIndexOf('/') + 1) : '' " 
       icon="pi pi-fw pi-history" 
@@ -1168,6 +1170,7 @@ li {
 }
 .changePopView{
   background-color: #F1F5F9;
+  border-radius: 6px;
 }
 .loadingScreen, .hisFailed{
     display: flex;
@@ -1178,7 +1181,7 @@ li {
     padding: 3rem;
 }
 .hisCompleted{
-  display: flex;
+    display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 1rem;
