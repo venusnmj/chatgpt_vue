@@ -1254,6 +1254,9 @@ div.codeBef, div.codeAft {
   .mobileView, div.mobileView{
       display: block;
   }
+  .btnTrans{
+    width: 100%;
+  }
 }
 </style>
 <style>

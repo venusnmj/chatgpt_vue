@@ -62,6 +62,7 @@ const activeFile = ref();
 const selectedMobileKey = ref(null);
 const dropdownVisiblePre = ref(false);
 const fileType = ref('pi pi-fw pi-folder');
+const noMatch = ref(false);
 
 
 
@@ -221,11 +222,29 @@ const checkHighlighted = (nodes) => {
     console.log(JSON.stringify(fileCode.value));
 }
 
+const saveRequest = (event) => {
+    // console.log('request changed '+event.target.value);
+    // let regex = /^[\p{L}\p{N} ,.!?\\-_]+$/u;
+
+
+    if (requestVal.value.match(/^[\p{L}\p{N} ,.!?\-_，。'"“”]+$/u) || requestVal.value == '') {
+        noMatch.value = false;
+        checkRequest(nodes.value);
+    }
+    else{
+        noMatch.value = true;
+        checkRequest(nodes.value);
+    }
+    
+
+}
+
 const checkRequest = (nodes) => {
     nodes.forEach(node => {
         if(node.styleClass == 'selectColor'){
             console.log('request update ' + requestVal.value);
             editRequest(fileCode.value, node.key, requestVal.value);
+            node.request = requestVal.value;
             // console.log('code update '+JSON.stringify(fileCode.value));
         }
         if (node.children) {
@@ -543,17 +562,17 @@ const onNodeSelect = (node) => {
         // } else if(codeLang.value == "js"){
         //     codeLang.value = "javascript";
         // }
+        selectedFile.value = node.label;
+        fileType.value = "pi pi-fw pi-file";
     } else {
         disableRequest.value = true;
         codeStr.value = '请选择文档来展示';
+        selectedFile.value = node.label;
+        fileType.value = "pi pi-fw pi-folder";
     }
 };
 
-const saveRequest = (event) => {
-    // console.log('request changed '+event.target.value);
-    checkRequest(nodes.value)
 
-}
 
 const toggleDropdownPre = () => {
     dropdownVisiblePre.value = !dropdownVisiblePre.value;
@@ -625,7 +644,7 @@ const findLabelByKey = (nodes, searchKey) => {
                     <div class="inputText">
                         <FloatLabel>
                             <Textarea v-if="disableRequest" disabled/>
-                            <Textarea v-else v-model="requestVal" maxlength="500" @input="saveRequest"/>
+                            <Textarea v-else v-model="requestVal" maxlength="500" @input="saveRequest" :invalid="noMatch"/>
                             <label>特别要求（比如“不要翻译任何姓名之类的词”）</label>
                         </FloatLabel>
                         <div v-if="!disableRequest" class="char-counter">
@@ -641,6 +660,7 @@ const findLabelByKey = (nodes, searchKey) => {
             :langSelections="allLang" 
             :modelSelections="allModels"
             :fileSelected="hasFileSel"
+            :requestError="noMatch"
             />
             <a ref="nextLinkRef" href="#/translating" style="display: none;"></a>
         </div>
@@ -736,6 +756,19 @@ const findLabelByKey = (nodes, searchKey) => {
 }
 .completedColor .p-tree-node-label, .completedColor .p-tree-node-icon{
     color: #16a34a;
+}
+
+.errorColor .p-tree-node-label, .errorColor .p-tree-node-icon{
+    color: #e06c75;
+}
+.p-tree-node-content.p-tree-node-selected.errorColor .p-tree-node-label, .p-tree-node-content.p-tree-node-selected.errorColor .p-tree-node-icon{
+    color: #e06c75;
+}
+.p-tree-node-content.p-tree-node-selected .p-tree-node-icon{
+    color: inherit;
+}
+.p-textarea.p-invalid:enabled:focus{
+    border-color: #f87171;
 }
 
 /* .muted-sect{

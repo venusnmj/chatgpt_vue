@@ -24,7 +24,7 @@ const selectLang = ref(fileAttr.selectedLanguage);
 const selectModel = ref(fileAttr.selectedModel);
 const nodes = ref(fileAttr.nodes);
 const storeJwt = ref(fileAttr.userJwt);
-const emit = defineEmits(['errorBool']);
+const emit = defineEmits(['errorBool', 'errMsg']);
 
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
@@ -57,7 +57,7 @@ const collectKeys = async (nodes, keys = {}) => {
 };
 
 // Function to add completed class to nodes
-const addCompleted = (fileArr, nodes) => {
+const addCompleted = async (fileArr, nodes) => {
     for (const [key, value] of Object.entries(fileArr)) {
         if (value.completed) {
             doneClass(nodes, value.key);
@@ -79,6 +79,28 @@ const doneClass = (nodes, keyVal) => {
     });
 }
 
+// Function to add error class to nodes
+const addErrored = async (fileArr, nodes) => {
+    for (const [key, value] of Object.entries(fileArr)) {
+        if (value.error && value.error.length != 0) {
+            errorClass(nodes, value.key);
+        }
+    }
+    return nodes;
+};
+
+const errorClass = (nodes, keyVal) => {
+    nodes.forEach(node => {
+        if (node.key === keyVal) {
+            node.styleClass = "errorColor";
+            node.icon = "pi pi-fw pi-exclamation-circle";
+        }
+        if (node.children) {
+            errorClass(node.children, keyVal);
+        }
+    });
+}
+
 // Delay function
 const delay = (time) => {
   return new Promise(res => setTimeout(res, time));
@@ -86,11 +108,13 @@ const delay = (time) => {
 
 // Polling function to check file status
 const PollingFiles = async (fileArr, total, userId, userJwt) => {
+    
     let done = 0;
     let state = '';
     console.log("check models "+ JSON.stringify(selectModel.value));
     for (const [key, value] of Object.entries(fileArr)) {
         if (value.translate) {
+            const logError = [];
             for(var i=0; i<selectModel.value.length; i++){
                 console.log('model name passed '+selectModel.value[i]);
                 state = await HandlePolling(userId, value.fileId, userJwt, selectModel.value[i]);
@@ -105,38 +129,52 @@ const PollingFiles = async (fileArr, total, userId, userJwt) => {
                     doneProcess.value = done;
                 }
                 else{
+                    const newProcessAll = allProcess.value--;
+                    console.log('new allProcess '+newProcessAll);                    
                     
                     console.log('failed state '+state);
                     // console.log('errorBool should change');
                     console.log('failed file '+ JSON.stringify(value));
+                    console.log('failed model '+selectModel.value[i]);
                     const newFailure = {
-                        fileId: value.fileId,
-                        content: value.content,
-                        path: value.path,
+                        // fileId: value.fileId,
+                        // content: value.content,
+                        // path: value.path,
                         model: selectModel.value[i],
-                        request: value.request ? value.request : null,
+                        // request: value.request ? value.request : null,
                         error: state
                     }
-                    failedFiles.value.push(newFailure);
-                    pgLoading.value = false;
+
+                    logError.push(newFailure);
+
+                    // value.error = logError;
+                    
+                    // failedFiles.value.push(newFailure);
+                    // pgLoading.value = false;
                     errorBool.value = true;
-                    emit('errorBool', true);
-                    emit('errMsg', '请检查您上传的代码或文件夹名');
+
+                    // emit('errorBool', true);
+                    // emit('errMsg', '请检查您上传的代码或文件夹名');
                 }
             }
-            
+            value.error = logError;
         }
     }
     loadVal.value = Math.floor((done / total) * 100);
+
     return done;
 }
 
 // Check if all files are completed
 const completedLoad = async (done, total) => {
-    if (done === total) {
+    if (done === total && total != 0) {
         loadVal.value = 100;
         await delay(300);
         completedBool.value = true;
+    }
+    else{
+        fileAttr.prevPage = window.location.hash.slice(1) || '/';
+        window.location.href = '#/codecheck';
     }
 }
 
@@ -145,9 +183,9 @@ const HandlePolling = async (userId, fileId, userJwt, modelName) => {
     try {
         const data = await PollingFile(userId, fileId, userJwt, modelName);
         if(data.error){
-            console.log('poll error '+data.error)
-            pgLoading.value = false;
-            errorBool.value = true;
+            // console.log('poll error '+data.error)
+            // pgLoading.value = false;
+            // errorBool.value = true;
             return data.error;
         }
         // if (data.error === 'Internal server error') {
@@ -243,7 +281,9 @@ const retryTranslation = async () => {
         console.log(retryFile);
         console.log(retryFile.error);
         if(retryFile.error == 'Bad Request: Invalid parameters.'){
+            
             // await RetryFile(userID.value, storeJwt.value, retryFile.fileId, retryFile.model, retryFile.content, retryFile.path, selectLang.value, retryFile.request);
+            // const state = await HandlePolling(useruserID.value, retryFile.fileId, storeJwt.value, retryFile.model);
         }
         else if(retryFile.error == 'Internal server error'){
             await RetryFile(userID.value, storeJwt.value, retryFile.fileId, retryFile.model);
@@ -307,8 +347,12 @@ onMounted(async () => {
     pgLoading.value = false;
 
     doneProcess.value = await PollingFiles(transArr.value, allProcess.value, userID.value, storeJwt.value);
+    await addCompleted(transArr.value, nodes.value);
+    await addErrored(transArr.value, nodes.value);
+
     await completedLoad(doneProcess.value, allProcess.value);
-    addCompleted(transArr.value, nodes.value);
+
+
     
     
 
@@ -377,7 +421,7 @@ onMounted(async () => {
                 </div>
             </div>
             <div class="returnStatus">
-                <div v-if="errorBool" class="error">
+                <!-- <div v-if="errorBool" class="error">
                     <i class="pi pi-times-circle" />
                     <h1 class="loadingTitle">
                         {{`${doneProcess}/${allProcess}`}} 文档已翻译
@@ -389,8 +433,8 @@ onMounted(async () => {
                         <Button label="用原版" severity="secondary" outlined />
                         <Button type="button" label="重试文档" severity="danger" :badge="allProcess-doneProcess" @click="retryTranslation"/>
                     </div>
-                </div>
-                <div v-else-if="completedBool" class="success">
+                </div> -->
+                <div v-if="completedBool" class="success">
                     <i class="pi pi-check-circle" />
                     <h1 class="loadingTitle">
                         {{`${doneProcess}/${allProcess}`}} 文档已翻译

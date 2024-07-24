@@ -9,15 +9,19 @@ import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
+import Textarea from 'primevue/textarea';
+import FloatLabel from 'primevue/floatlabel';
+import ProgressSpinner from 'primevue/progressspinner';
 import "primeicons/primeicons.css";
 
 import CodeEditor from '../components/CodeEditor.vue';
 import ButtonGrad from '../components/ButtonGrad.vue';
-import { GetTranslation } from '../utils/apiCalls';
-import JSZip from 'jszip';
+import { GetTranslation, RetryFile, PollingFile } from '../utils/apiCalls';
+import JSZip, { file } from 'jszip';
 import FileSaver from 'file-saver';
-import LoadingScreen from '@/components/LoadingScreen.vue';
+import LoadingSection from '@/components/LoadingSection.vue';
 
+const MAX_CHARS = 500;
 
 const selectedKey = ref(null);
 const dropdownVisiblePre = ref(false);
@@ -30,6 +34,8 @@ const userID = ref(fileAttr.userId);
 const storeJwt = ref(fileAttr.userJwt);
 const selectModel = ref(fileAttr.selectedModel);
 const disModel = ref(fileAttr.displayModel);
+const selectLang = ref(fileAttr.selectedLanguage);
+
 
 const selectedFile = ref(null);
 const fileType = ref('pi pi-fw pi-folder');
@@ -51,9 +57,16 @@ const modelOptions = ref([]);
 const downloadVisible = ref(false);
 const downloadMod = ref(0);
 const OptError = ref(false);
+const fileRetry = ref(false); 
+const fileEdit = ref(false);
+const retryLoading = ref(false);
 
-const emit = defineEmits(['errorBool']);
+const emit = defineEmits(['errorBool', 'errMsg']);
 const isLoading = ref(true);
+
+const requestVal = ref('');
+const remainingChars = computed(() => MAX_CHARS - requestVal.value.length);
+
 
 
 
@@ -135,6 +148,7 @@ const addCode = async (fileArr) => {
             value.transCode = multiModel;
             console.log('multiModel ' + value.transCode.length);
             console.log('final '+value.transCode);
+            
         } else if (!value.translate) {
             value.transCode = value.code;
         }
@@ -233,7 +247,8 @@ const findLabelByKey = (nodes, searchKey) => {
 const traverseTree = async (nodes, zip, path = '') => {
     console.log("zip version "+downloadMod.value);
     nodes.forEach(node => {
-        // console.log("what's in each node: "+node.transCode);
+        console.log("what's in each node: "+node.transCode);
+        
       if(node.key == 0){
         zipFolder.value = node.label;
       }
@@ -317,7 +332,6 @@ const changeCodeModel = async (label) => {
 }
 
 
-//wip damn
 watch (storeMod, (newVal) => {
     const node = findNodeByKey(fileCode.value, activeFile.value);
     if (node !== null) {
@@ -327,9 +341,34 @@ watch (storeMod, (newVal) => {
 
         codeStr.value = `${node[1].code}`;
 
-        console.log(node[1].transCode[storeMod.value]);
+        // console.log(node[1].transCode[storeMod.value]);
         // console.log(storeMod.value);
-        codeResult.value = `${node[1].transCode[storeMod.value]}`;
+        console.log(node[1]);
+        if(node[1].error && node[1].error.length != 0 && (node[1].completed != true)){
+            
+            console.log('check this err '+selectModel.value[storeMod.value])
+            for(const err of node[1].error){
+                if(err.model == selectModel.value[storeMod.value]){
+                    console.log('get right err '+ err.error);
+                    if(err.error == 'Internal server error'){
+                        fileEdit.value = false;
+                        fileRetry.value = true;
+                    }
+                    else if(err.error == 'Bad Request: Invalid parameters.'){
+                        requestVal.value = node[1].request;
+                        fileRetry.value = false;
+                        fileEdit.value = true;
+                    }
+                }
+            }
+            
+
+        }else{
+            fileRetry.value = false;
+            fileEdit.value = false;
+            codeResult.value = `${node[1].transCode[storeMod.value]}`;
+        }
+        // codeResult.value = `${node[1].transCode[storeMod.value]}`;
     }
 })
 
@@ -344,9 +383,18 @@ watch(selectedKey, (newVal, oldVal) => {
     if (node !== null) {
         selectedFile.value = node[1].name;
         if(node[1].completed){
+            fileRetry.value = false;
+            fileEdit.value = false;
             fileType.value = "pi pi-fw pi-check-circle";
         }
+        else if(node[1].error && node[1].error.length != 0  && (node[1].completed != true)){
+            // fileRetry.value = true;
+            // fileEdit.value = false;
+            fileType.value = "pi pi-fw pi-exclamation-circle";
+        }
         else{
+            fileRetry.value = false;
+            fileEdit.value = false;
             fileType.value = "pi pi-fw pi-file";
         }
         
@@ -356,13 +404,37 @@ watch(selectedKey, (newVal, oldVal) => {
 
         console.log("check node "+ JSON.stringify(node[1]));
         // console.log(storeMod.value);
+
         if(!node[1].translate){
             codeResult.value = `${node[1].transCode}`;
             hasTrans.value = false;
         }
         else{
-            codeResult.value = `${node[1].transCode[storeMod.value]}`;
+            if(node[1].error && node[1].error.length != 0 && (node[1].completed != true)){
+                // codeResult.value = `文件翻译出现了问题 ${storeMod.value}`;
+                // console.log(node[1]);
+                console.log('check this err '+selectModel.value[storeMod.value])
+                for(const err of node[1].error){
+                    if(err.model == selectModel.value[storeMod.value]){
+                        console.log('get right err '+ err.error);
+                        if(err.error == 'Internal server error'){
+                            fileEdit.value = false;
+                            fileRetry.value = true;
+                        }
+                        else if(err.error == 'Bad Request: Invalid parameters.'){
+                            requestVal.value = node[1].request;
+                            fileRetry.value = false;
+                            fileEdit.value = true;
+                            
+                        }
+                    }
+                }
+                
+            }else{
+                codeResult.value = `${node[1].transCode[storeMod.value]}`;
+            }
             hasTrans.value = true;
+            
         }
         
         
@@ -457,6 +529,175 @@ const againButton = async () => {
     window.location.href = '#/';
 }
 
+const retryTranslation = async () => {
+    console.log(selectedFile.value);
+    console.log(activeFile.value);
+    console.log(storeMod.value);
+    const node = findNodeByKey(fileCode.value, activeFile.value);
+    console.log(node);
+
+    for(var i=0; i<selectModel.value.length; i++){
+        await RetryFile(userID.value, storeJwt.value, node[1].fileId, selectModel.value[i], node[1].content, node[1].path, selectLang.value, node[1].request);
+        let state = await HandlePolling(userID.value, node[1].fileId, storeJwt.value, selectModel.value[i]);
+        while (state === 'processing') {
+            retryLoading.value = true;
+            await delay(1000);
+            state = await HandlePolling(userID.value, node[1].fileId, storeJwt.value, selectModel.value[i]);
+        }
+        if (state === 'completed') {
+            
+            // codeResult.value = 
+
+            const multiModel = [];
+            const translation = await GetTranslated(userID.value, node[1].fileId, storeJwt.value, selectModel.value[i]);
+            multiModel.push(translation);
+
+            if(node[1].transCode){
+                node[1].transCode[i] = translation;
+            }
+            else{
+                multiModel[i] = translation;
+                node[1].transCode = multiModel;
+            }
+
+            if(i==(selectModel.value.length-1)){
+                console.log(state);
+                node[1].completed = true;
+                fileType.value = "pi pi-fw pi-check-circle";
+                fileEdit.value = false;
+                fileRetry.value = false;
+                retryLoading.value = false;
+                await addCode(fileAttr.fileBef);
+                // codeResult.value = node[1].transCode[storeMod.value];
+            }
+            if(selectModel.value[storeMod.value] == selectModel.value[i]){
+                codeResult.value = node[1].transCode[storeMod.value];
+            }
+            
+            console.log('final '+node[1].transCode);
+            
+            doneClass(nodes.value, node[1].key);
+            
+        }
+        else{
+            fileEdit.value = true;
+            fileRetry.value = false;
+            retryLoading.value = false;
+        }
+        // console.log(state);
+    }
+
+    // await RetryFile(userID.value, storeJwt.value, node[1].fileId, selectModel.value[storeMod.value], node[1].content, node[1].path, selectLang.value, node[1].request);
+    // //RetryFile
+    // let state = await HandlePolling(userID.value, node[1].fileId, storeJwt.value, selectModel.value[storeMod.value]);
+
+    // while (state === 'processing') {
+    //     await delay(1000);
+    //     state = await HandlePolling(userID.value, node[1].fileId, storeJwt.value, selectModel.value[storeMod.value]);
+    // }
+    // if (state === 'completed') {
+    //     // codeResult.value = 
+
+    //     const multiModel = [];
+    //     const translation = await GetTranslated(userID.value, node[1].fileId, storeJwt.value, selectModel.value[storeMod.value]);
+    //     if(node[1].transCode){
+    //         node[1].transCode[storeMod.value] = translation;
+    //     }
+    //     else{
+    //         multiModel[storeMod.value] = translation;
+    //         node[1].transCode = multiModel;
+    //     }
+        
+    //     console.log('final '+node[1].transCode);
+    //     codeResult.value = node[1].transCode[storeMod.value];
+    //     doneClass(nodes.value, node[1].key);
+        
+    //     fileEdit.value = false;
+    //     fileRetry.value = false;
+    // }
+    // else{
+    //     fileEdit.value = true;
+    //     fileRetry.value = false;
+    // }
+    // console.log(state);
+
+}
+
+const resendTranslation = async () => {
+    console.log(selectedFile.value);
+    console.log(activeFile.value);
+    console.log(storeMod.value);
+    const node = findNodeByKey(fileCode.value, activeFile.value);
+    console.log(node);
+    //RetryFile
+}
+
+// Delay function
+const delay = (time) => {
+  return new Promise(res => setTimeout(res, time));
+}
+
+const HandlePolling = async (userId, fileId, userJwt, modelName) => {
+    try {
+        const data = await PollingFile(userId, fileId, userJwt, modelName);
+        if(data.error){
+            // console.log('poll error '+data.error)
+            // pgLoading.value = false;
+            // errorBool.value = true;
+            return data.error;
+        }
+        // if (data.error === 'Internal server error') {
+        //     pgLoading.value = false;
+        //     errorBool.value = true;
+        // } else if (data.error === 'ID not found') {
+        //     currentPath.value = '#/';
+        // }
+        return data.status;
+    } catch (error) {
+        apiError.value = error.message;
+        emit('errorBool', true);
+        throw error;
+    }
+}
+// Function to add done class to nodes
+const doneClass = (nodes, keyVal) => {
+    nodes.forEach(node => {
+        if (node.key === keyVal) {
+            node.styleClass = "completedColor";
+            node.icon = "pi pi-fw pi-check-circle";
+        }
+        if (node.children) {
+            doneClass(node.children, keyVal);
+        }
+    });
+}
+
+const saveRequest = (event) => {
+    // console.log('request changed '+event.target.value);
+    checkRequest(nodes.value)
+}
+const checkRequest = (nodes) => {
+    nodes.forEach(node => {
+        if(node.key == activeFile.value){
+            console.log('request update ' + requestVal.value);
+            editRequest(fileCode.value, node.key, requestVal.value);
+            // console.log('code update '+JSON.stringify(fileCode.value));
+        }
+        if (node.children) {
+            checkRequest(node.children);
+        }
+    })
+    // console.log(JSON.stringify(fileCode.value));
+}
+const editRequest = (nodeList, keyVal, requestNew) => {
+    for (const value of nodeList) {
+        if(value.key == keyVal){
+            value.request = requestNew;
+            console.log(value.request);
+        }
+    }
+}
+
 
 </script>
 <template>
@@ -537,11 +778,60 @@ const againButton = async () => {
           </div>
       </div>
       <div class="codeHandle">
-          <div class="codeBef desktopView">
-          <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate" :isEditable="false"/>
-        </div>
-        <div class="codeAft">
-          <CodeEditor :codeDoc="codeResult" :language="codeLang" @update:codeDoc="handleResultUpdate"/>
+        <div class="eqHeight">
+            <div v-if="fileEdit" class="codeBef reSubmit">
+                <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate" :isEditable="true"/>
+                <div class="inputText">
+                    <FloatLabel>
+                        <Textarea v-model="requestVal" maxlength="500" @input="saveRequest" class="desktopView"/>
+                        <Textarea v-model="requestVal" maxlength="500" @input="saveRequest" autoResize class="mobileView"/>
+                        <label>特别要求（比如“不要翻译任何姓名之类的词”）</label>
+                    </FloatLabel>
+                    <div class="char-counter">
+                        剩{{ remainingChars }}字
+                    </div>
+                </div>
+            </div>
+            <div v-else class="codeBef desktopView">
+                <CodeEditor :codeDoc="codeStr" :language="codeLang" @update:codeDoc="handleCodeUpdate" :isEditable="false"/>
+            </div>
+            <div v-if="fileEdit" class="codeAft">  
+                
+                <div v-if="retryLoading" class="loading">
+                    <div class="loadingScreen">
+                        <ProgressSpinner style="width: 50%; height: 50%" strokeWidth="3" fill="transparent" animationDuration="2s" aria-label="Custom ProgressSpinner" />
+                        <h1 class="loadingTitle">
+                            正在访问网页...
+                        </h1>
+                        <h3 class="notice">
+                            您访问的网页快要好了...
+                        </h3>
+                    </div>
+                </div>
+                <div v-else class="retryCol">
+                    <i class="pi pi-times-circle" />
+                    
+                    <h1 class="retryTitle">
+                        翻译出现问题   <br>    
+                        <span class="retryContent">修改再重试</span>
+                    </h1>
+                    
+                    <Button type="button" label="重试翻译文档" severity="danger" @click="retryTranslation"/>
+                </div>
+            </div>
+            <div v-else-if="fileRetry" class="codeAft">  
+                <div class="retryCol">
+                    <i class="pi pi-times-circle" />
+                    <h1 class="retryTitle">
+                        翻译出现问题
+                    </h1>
+                    <Button type="button" label="重试翻译文档" severity="danger" @click="resendTranslation"/>
+                </div>
+                
+            </div>
+            <div v-else class="codeAft">
+                <CodeEditor :codeDoc="codeResult" :language="codeLang" @update:codeDoc="handleResultUpdate"/>
+            </div>
         </div>
       </div>
       <!-- <div class="modelOpt">
@@ -627,6 +917,9 @@ div.pre-Ctrl, div.post-Ctrl {
 .showFile .pi-check-circle{
     color: #16a34a;
 }
+.showFile .pi-exclamation-circle{
+    color: #e06c75;
+}
 .cm-editor.ͼo {
   height: 100%;
   border-radius: 0.5rem;
@@ -664,6 +957,7 @@ div.codeBef, div.codeAft {
     border-radius: 0.5rem;
 }
 
+
 div.btnBtm {
     width: 49%;
     display: flex;
@@ -672,24 +966,66 @@ div.btnBtm {
 }
 
 div.codeBef, div.codeAft {
-    height: 100%;
+    height: auto;
 }
 
-/* .muted-sect {
-    background-color: #F0F2F5;
-    padding: 2rem;
-    border-radius: 10px;
-} */
+
+
 .codeHandle {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    justify-content: space-between;
-    /* padding: 1rem 0rem; */
     max-height: 400px;
     overflow-y: scroll;
     border-radius: 0.5rem;
 }
+.eqHeight{
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+    justify-content: space-between;
+    border-radius: 0.5rem;
+}
+.retryCol i.pi-times-circle{
+    font-size: 7rem;
+    color: #ef4444;
+}
+.retryTitle{
+    color: #fff;
+    text-align: center;
+    line-height: normal;
+}
+.retryContent{
+    font-size: 1rem;
+    color: #fff;
+}
+.retryCol{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    height: 400px;
+}
+
+div.reSubmit .cm-editor{
+    max-height: 250px;
+}
+div.reSubmit{
+    background-color: transparent;
+    /* padding-bottom: 2rem; */
+}
+.reSubmit .inputText{
+    height: auto;
+}
+.loadingScreen{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 3rem;
+    color: #fff;
+}
+
 .modelChoose{
     display: flex;
     justify-content: space-between;
@@ -727,6 +1063,7 @@ div.codeBef, div.codeAft {
 }
 
 
+
 .desktopView, div.desktopView {
     display: block;
 }
@@ -741,6 +1078,12 @@ div.codeBef, div.codeAft {
       display: block;
   }
   div.post-Ctrl, div.codeAft, .modelDisplay{
+    width: 100%;
+  }
+  .eqHeight{
+    flex-direction: column;
+  }
+  div.reSubmit{
     width: 100%;
   }
 }

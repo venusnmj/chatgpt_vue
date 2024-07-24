@@ -1,12 +1,28 @@
 {
-  "key": "7",
-  "label": "nestedTest.java",
-  "path": "multimodal/nestedFolder/nestedTest.java",
-  "icon": "pi pi-fw pi-file",
-  "data": "File",
-  "children": [],
-  "fileType": "java",
+  "key": "8",
+  "type": "sql",
+  "path": "multimodal/nestedFolder/sql.sql",
+  "name": "sql.sql",
+  "content": {},
+  "code": "-- 2. Insert data into tables\nINSERT INTO employees (employee_id, first_name, last_name, department_id, salary, hire_date) VALUES\n(1, 'John', 'Doe', 1, 60000, '2015-01-15'),\n(2, 'Jane', 'Smith', 2, 75000, '2017-03-23'),\n(3, 'Alice', 'Johnson', 1, 50000, '2019-07-19'),\n(4, 'Bob', 'Brown', 3, 82000, '2013-11-04'),\n(5, 'Charlie', 'Davis', 2, 67000, '2020-05-14');\n",
   "selectable": true,
-  "styleClass": "",
-  "transCode": "import java.util.Scanner;\n\n    public class test1 {\n\n        private static void bubble(int[] arr, int length){\n            int i, j, t; \n\n            for (i = length -2; i >=0; i--){\n                for (j=0; j<=i; j++){\n                    if (arr[j] > arr[j+1]){\n                        t = arr[j]; \n                        arr[j] = arr[j+1]; \n                        arr[j+1] = t; \n                    }\n                }\n            }\n        }\n\n        public static void main(String[] arrs) {\n            int[] arr = new int[100]; \n            int n, i;\n\n            System.out.printf(\"\\n\\n 输入要排序的整数元素数量：\");\n            \n            Scanner scanner = new Scanner(System.in);\n            n = scanner.nextInt(); \n            scanner.close(); \n\n            for (i = 0; i < n; i++){\n                System.out.printf(\"\\n\\n 为第 %d 个元素输入整数值：\", i+1);\n                arr[i] = scanner.nextInt(); \n            }\n\n            bubble(arr,n); \n\n            System.out.printf(\"\\n\\n 最终排序后的数组为：\"); \n            for (i = 0; i<= n-1; i++){\n                System.out.printf(\"%d \", arr[i]);\n            }\n        }\n    }"
+  "fileId": "192.168.65.1twerbkik25t2024-07-24118",
+  "translate": true,
+  "downloadFile": {},
+  "request": "",
+  "error": [
+    {
+      "model": "gpt-3.5-turbo-0125",
+      "error": "Bad Request: Invalid parameters."
+    },
+    {
+      "model": "gpt-4o-mini-2024-07-18",
+      "error": "Bad Request: Invalid parameters."
+    }
+  ],
+  "transCode": [
+    "-- 2. 将数据插入表中\nINSERT INTO employees (employee_id, first_name, last_name, department_id, salary, hire_date) VALUES\n(1, '约翰', '杜', 1, 60000, '2015-01-15'),\n(2, '简', '史密斯', 2, 75000, '2017-03-23'),\n(3, '爱丽丝', '约翰逊', 1, 50000, '2019-07-19'),\n(4, '鲍勃', '布朗', 3, 82000, '2013-11-04'),\n(5, '查理', '戴维斯', 2, 67000, '2020-05-14');",
+    "-- 2. Insert data into tables\nINSERT INTO employees (employee_id, first_name, last_name, department_id, salary, hire_date) VALUES\n(1, '约翰', '杜', 1, 60000, '2015-01-15'),\n(2, '简', '史密斯', 2, 75000, '2017-03-23'),\n(3, '爱丽丝', '约翰逊', 1, 50000, '2019-07-19'),\n(4, '鲍勃', '布朗', 3, 82000, '2013-11-04'),\n(5, '查理', '戴维斯', 2, 67000, '2020-05-14');"
+  ],
+  "completed": true
 }

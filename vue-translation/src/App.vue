@@ -61,7 +61,7 @@ const gettingSetup = async () => {
 
 const testProxy = async () => {
   try {
-    const response = await fetch('http://192.168.0.104:8080/public/website-info');
+    const response = await fetch('http://54.222.203.90:8080/public/website-info');
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }

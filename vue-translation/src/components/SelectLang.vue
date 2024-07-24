@@ -16,6 +16,7 @@ const selectedModel = ref('');
 const modelSelected = ref(false);
 const modelArr = ref([]);
 const fileSelected = ref(true);
+const requestError = ref(false);
 
 const emit = defineEmits(['language-selected', 'model-selected']);
 
@@ -78,7 +79,23 @@ function checkLang() {
                 size: 'small'
             }
         });
-    }else {
+    }else if(requestError.value == true){
+        confirm.require({
+            group: 'templating',
+            header: '不能接受您的要求',
+            message: '请只用字幕和常见标点',
+            rejectProps: {
+                label: '取消',
+                outlined: true,
+                size: 'small'
+            },
+            acceptProps: {
+                label: 'OK',
+                size: 'small'
+            }
+        });
+    }
+    else {
         emit('language-selected', selectedValue.value);
         emit('model-selected', modelArr.value);
     }
@@ -106,11 +123,18 @@ const props = defineProps({
     fileSelected: {
         type: Boolean,
         required: true,
+    },
+    requestError: {
+        type: Boolean,
+        required: true,
     }
 });
 
 watch(() => props.fileSelected, (newVal) => {
     fileSelected.value = newVal;
+});
+watch(() => props.requestError, (newVal) => {
+    requestError.value = newVal;
 });
 
 </script>
