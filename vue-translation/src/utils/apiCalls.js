@@ -1,6 +1,6 @@
 export const GetSetup = async () => {
     try {
-      const response = await fetch('http://192.168.0.104:8080/public/website-info');
+      const response = await fetch('http://54.222.203.90:8080/public/website-info');
     // const response = await fetch('/api/public/website-info');
 
   
@@ -45,7 +45,7 @@ export const GetSetup = async () => {
   
   export const GetUserIp = async () => {
   try {
-    const response = await fetch('http://192.168.0.104:8080/public/get-ip', {
+    const response = await fetch('http://54.222.203.90:8080/public/get-ip', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
         console.log("Form Data: " + formData.get("ipAddress"));
 
-        const response = await fetch(`http://192.168.0.104:8080/public/${uid}/create`, {
+        const response = await fetch(`http://54.222.203.90:8080/public/${uid}/create`, {
             method: 'POST',
             body: formData
         });
@@ -108,7 +108,7 @@ export const PutUserId = async (uid, ipAddress) => {
 
 export const AuthenticateUser = async (uid) => {
     try {
-        const response = await fetch('http://192.168.0.104:8080/authenticate/user', {
+        const response = await fetch('http://54.222.203.90:8080/authenticate/user', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export const AuthenticateUser = async (uid) => {
 
 export const GetHistory = async ( uid, jwt) => {
     try {
-        const response = await fetch(`http://192.168.0.104:8080/user/files/${uid}/file-names`, {
+        const response = await fetch(`http://54.222.203.90:8080/user/files/${uid}/file-names`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
@@ -173,7 +173,7 @@ export const GetHistory = async ( uid, jwt) => {
 export const GetTranslatable = async (uid, userFiles, jwt) => {
     console.log(userFiles); 
     try {
-        const response = await fetch(`http://192.168.0.104:8080/user/files/${uid}/upload`, {
+        const response = await fetch(`http://54.222.203.90:8080/user/files/${uid}/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${jwt}`,
@@ -220,7 +220,7 @@ export const GetTranslatable = async (uid, userFiles, jwt) => {
 // the status code of each individual files tell us whether that id +/ modelName is taken / rate limited / internal sever error 
 // export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNames, reqArr) => {
 //     console.log('request arr '+ JSON.stringify(reqArr));
-//     const url = `http://192.168.0.104:8080/user/translate/${uid}/upload`;
+//     const url = `http://54.222.203.90:8080/user/translate/${uid}/upload`;
 //     const formData = new FormData();
 
 //     filesData.forEach(fileData => {
@@ -270,7 +270,7 @@ export const GetTranslatable = async (uid, userFiles, jwt) => {
 
 export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNames, reqArr) => {
     console.log('Request Array:', JSON.stringify(reqArr));
-    const url = `http://192.168.0.104:8080/user/translate/${uid}/upload`;
+    const url = `http://54.222.203.90:8080/user/translate/${uid}/upload`;
     const formData = new FormData();
 
     // Append files, ids, and filePaths to the formData
@@ -328,7 +328,7 @@ export const SendFile = async (uid, filesData, jwtToken, targetLanguage, modelNa
 
 
 export const PollingFile = async (uid, fileId, jwtToken, modelName) => {
-    const url = `http://192.168.0.104:8080/user/translate/${uid}/status`;
+    const url = `http://54.222.203.90:8080/user/translate/${uid}/status`;
     const params = new URLSearchParams({ id: fileId, modelName: modelName });
 
     try {
@@ -386,7 +386,7 @@ export const PollingFile = async (uid, fileId, jwtToken, modelName) => {
 // }
 
 export const RetryFile = async (uid, jwtToken, fileId, modelName, file, filePath, lang, specialInstruction) => {
-    const url = `http://192.168.0.104:8080/user/translate/${uid}/retry`;
+    const url = `http://54.222.203.90:8080/user/translate/${uid}/retry`;
     const formData = new FormData();
 
     // Append the necessary fields to the formData
@@ -422,7 +422,7 @@ export const RetryFile = async (uid, jwtToken, fileId, modelName, file, filePath
 
 
 export const GetTranslation = async (uid, fileId, jwtToken, modelName) => {
-    const url = `http://192.168.0.104:8080/user/translate/${uid}/content`;
+    const url = `http://54.222.203.90:8080/user/translate/${uid}/content`;
     const params = new URLSearchParams({ id: fileId, modelName: modelName });
 
     try {
@@ -462,7 +462,7 @@ export const GetTranslation = async (uid, fileId, jwtToken, modelName) => {
 
 export const GetModels = async () => {
     try {
-        const response = await fetch('http://192.168.0.104:8080/public/website-info/ai-list');
+        const response = await fetch('http://54.222.203.90:8080/public/website-info/ai-list');
     
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -477,7 +477,7 @@ export const GetModels = async () => {
 }
 
 export const PollingHistory = async (uid, fileId, jwtToken) => {
-    const url = `http://192.168.0.104:8080/user/translate/${uid}/get-files-translated-models`;
+    const url = `http://54.222.203.90:8080/user/translate/${uid}/get-files-translated-models`;
     const params = new URLSearchParams({ id: fileId });
 
     console.log("uid: " + uid + "\nfileId: " + fileId);
@@ -517,7 +517,7 @@ export const PollingHistory = async (uid, fileId, jwtToken) => {
 
 
 export const GetOriginal = async (uid, fileId, jwtToken) => {
-    const url = `http://192.168.0.104:8080/user/translate/${uid}/get-original-content`;
+    const url = `http://54.222.203.90:8080/user/translate/${uid}/get-original-content`;
     const params = new URLSearchParams({ id: fileId });
 
     console.log("uid: " + uid + "\nfileId: " + fileId);
